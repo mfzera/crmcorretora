@@ -1,0 +1,49 @@
+name: Cloudflare Pages Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'apps/web-new/**'
+      - 'libs/shared/types/**'
+      - 'libs/shared/utils/**'
+      - 'libs/shared/config/**'
+      - 'libs/shared/ui/**'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install web dependencies only
+        run: pnpm install --frozen-lockfile --filter @ecotech/web-new...
+
+      - name: Build
+        working-directory: apps/web-new
+        run: pnpm run build
+        env:
+          CF_PAGES_BRANCH: ${{ github.ref_name }}
+
+      - name: Deploy to Cloudflare Pages
+        working-directory: apps/web-new
+        run: pnpm exec wrangler pages deploy dist/client --project-name=ecotech-sys --branch=${{ github.ref_name }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

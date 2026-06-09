@@ -29,6 +29,7 @@ function vendorChunk(id: string): string | undefined {
   if (pkg === '@dnd-kit/core' || pkg === '@dnd-kit/sortable' || pkg === '@dnd-kit/utilities') {
     return 'vendor-dnd';
   }
+  if (pkg === 'lucide-react') return 'vendor-icons';
   if (pkg === 'three' || pkg === '@react-three/fiber' || pkg === '@react-three/drei') {
     return 'particle-field';
   }
@@ -79,6 +80,7 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       target: 'esnext',
+      reportCompressedSize: false,
       outDir: 'dist/client',
       modulePreload: {
         resolveDependencies(_url, deps, context) {
