@@ -20,6 +20,7 @@ export interface CrossSellingFiltersState {
   vendedorId: string;
   vigenciaInicioRange: DateRange | undefined;
   vigenciaFimRange: DateRange | undefined;
+  dataAprovacaoRange: DateRange | undefined;
 }
 
 interface CrossSellingFiltersProps {
@@ -127,6 +128,15 @@ export const CrossSellingFilters = memo(function CrossSellingFilters({
   const vigenciaLabel = (() => {
     const range = filters.vigenciaFimRange;
     if (!range?.from) return 'Venc. vigência';
+    if (range.to && range.to.getTime() !== range.from.getTime()) {
+      return `${dayjs(range.from).format('DD/MM/YY')} – ${dayjs(range.to).format('DD/MM/YY')}`;
+    }
+    return dayjs(range.from).format('DD/MM/YY');
+  })();
+
+  const dataAprovacaoLabel = (() => {
+    const range = filters.dataAprovacaoRange;
+    if (!range?.from) return 'Dt. aprovação';
     if (range.to && range.to.getTime() !== range.from.getTime()) {
       return `${dayjs(range.from).format('DD/MM/YY')} – ${dayjs(range.to).format('DD/MM/YY')}`;
     }
@@ -252,6 +262,40 @@ export const CrossSellingFilters = memo(function CrossSellingFilters({
             mode="range"
             selected={filters.vigenciaFimRange}
             onSelect={(range) => onChangeFilters({ vigenciaFimRange: range })}
+          />
+        </PopoverContent>
+      </Popover>
+
+      {/* Dt. aprovação */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant={filters.dataAprovacaoRange?.from ? 'secondary' : 'outline'}
+            size="sm"
+            className="h-8 px-3 text-sm gap-1.5 font-normal"
+          >
+            <CalendarDays className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span>{dataAprovacaoLabel}</span>
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+            {filters.dataAprovacaoRange?.from && (
+              <span
+                role="button"
+                className="h-4 w-4 flex items-center justify-center rounded-full hover:bg-foreground/10 -mr-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChangeFilters({ dataAprovacaoRange: undefined });
+                }}
+              >
+                <X className="h-3 w-3" />
+              </span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-2" align="start">
+          <Calendar
+            mode="range"
+            selected={filters.dataAprovacaoRange}
+            onSelect={(range) => onChangeFilters({ dataAprovacaoRange: range })}
           />
         </PopoverContent>
       </Popover>

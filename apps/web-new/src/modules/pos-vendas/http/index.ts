@@ -11,6 +11,8 @@ export interface CrossSellingFilters {
   vigenciaInicioAte?: string;
   vigenciaFimDe?: string;
   vigenciaFimAte?: string;
+  dataAprovacaoDe?: string;
+  dataAprovacaoAte?: string;
   page?: number;
   limit?: number;
 }
@@ -49,6 +51,8 @@ export function useSegurosAtivos(filters: CrossSellingFilters = {}) {
       if (filters.vigenciaInicioAte) params.vigenciaInicioAte = filters.vigenciaInicioAte;
       if (filters.vigenciaFimDe) params.vigenciaFimDe = filters.vigenciaFimDe;
       if (filters.vigenciaFimAte) params.vigenciaFimAte = filters.vigenciaFimAte;
+      if (filters.dataAprovacaoDe) params.dataAprovacaoDe = filters.dataAprovacaoDe;
+      if (filters.dataAprovacaoAte) params.dataAprovacaoAte = filters.dataAprovacaoAte;
 
       const response = await api.get<any>('/sales-documents', { params });
 

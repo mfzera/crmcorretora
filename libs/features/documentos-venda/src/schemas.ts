@@ -109,6 +109,8 @@ export const listDocumentosVendaQuerySchema = z.object({
   vigenciaInicioDe: isoDate.optional(),
   criadoApos: isoDate.optional(),
   criadoAntes: isoDate.optional(),
+  dataAprovacaoDe: isoDate.optional(),
+  dataAprovacaoAte: isoDate.optional(),
 });
 
 export const registrarApoliceSchema = z.object({

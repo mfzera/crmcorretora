@@ -87,6 +87,8 @@ export const listDocumentosVendaQuerySchema = z.object({
   vigenciaInicioDe: z.string().optional(),
   criadoApos: z.string().optional(),
   criadoAntes: z.string().optional(),
+  dataAprovacaoDe: z.string().optional(),
+  dataAprovacaoAte: z.string().optional(),
 });
 
 export const registrarApoliceSchema = z.object({

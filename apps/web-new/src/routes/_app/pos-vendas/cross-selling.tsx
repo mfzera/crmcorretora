@@ -29,6 +29,7 @@ const EMPTY_FILTERS: CrossSellingFiltersState = {
   vendedorId: '',
   vigenciaInicioRange: undefined,
   vigenciaFimRange: undefined,
+  dataAprovacaoRange: undefined,
 };
 
 function countActiveFilters(f: CrossSellingFiltersState): number {
@@ -39,6 +40,7 @@ function countActiveFilters(f: CrossSellingFiltersState): number {
   if (f.vendedorId) n++;
   if (f.vigenciaInicioRange?.from) n++;
   if (f.vigenciaFimRange?.from) n++;
+  if (f.dataAprovacaoRange?.from) n++;
   return n;
 }
 
@@ -83,6 +85,14 @@ function CrossSellingContent() {
       ? dayjs(filters.vigenciaFimRange.to).format('YYYY-MM-DD')
       : filters.vigenciaFimRange?.from
         ? dayjs(filters.vigenciaFimRange.from).format('YYYY-MM-DD')
+        : undefined,
+    dataAprovacaoDe: filters.dataAprovacaoRange?.from
+      ? dayjs(filters.dataAprovacaoRange.from).format('YYYY-MM-DD')
+      : undefined,
+    dataAprovacaoAte: filters.dataAprovacaoRange?.to
+      ? dayjs(filters.dataAprovacaoRange.to).format('YYYY-MM-DD')
+      : filters.dataAprovacaoRange?.from
+        ? dayjs(filters.dataAprovacaoRange.from).format('YYYY-MM-DD')
         : undefined,
     page,
     limit: LIMIT,

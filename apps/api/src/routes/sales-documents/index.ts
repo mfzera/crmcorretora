@@ -585,6 +585,21 @@ const documentosVendaRoutes: FastifyPluginAsyncZod = async function (fastify) {
         );
       }
 
+      if (query.dataAprovacaoDe) {
+        conditions.push(
+          gte(documentosVenda.dataAprovacaoCadastro, new Date(query.dataAprovacaoDe)),
+        );
+      }
+
+      if (query.dataAprovacaoAte) {
+        // Inclui o dia inteiro do limite superior
+        const ate = new Date(query.dataAprovacaoAte);
+        ate.setDate(ate.getDate() + 1);
+        conditions.push(
+          lte(documentosVenda.dataAprovacaoCadastro, ate),
+        );
+      }
+
       // Busca por nome/razão social do cliente, número do documento ou produto
       if (query.search) {
         const searchTerm = `%${query.search.toLowerCase()}%`;
