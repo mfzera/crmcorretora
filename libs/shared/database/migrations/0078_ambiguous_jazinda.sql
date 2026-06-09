@@ -1,0 +1,2 @@
+CREATE INDEX "idx_cotacao_status_created" ON "cotacao" USING btree ("corretora_id","status","created_at");--> statement-breakpoint
+CREATE INDEX "idx_cotacao_atuante" ON "cotacao" USING btree ("atuante_id");

@@ -1,0 +1,23 @@
+{
+  "name": "@ecotech/shared/storage",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js",
+      "default": "./src/index.js"
+    }
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1035.0",
+    "@aws-sdk/s3-request-presigner": "^3.1035.0",
+    "@ecotech/shared/database": "workspace:*",
+    "@ecotech/shared/utils": "workspace:*",
+    "p-limit": "^7.3.0",
+    "pdf-parse": "1.1.1",
+    "uuid": "^14.0.0"
+  }
+}

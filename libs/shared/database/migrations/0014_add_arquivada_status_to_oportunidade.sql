@@ -1,0 +1,1 @@
+ALTER TYPE "public"."oportunidade_status" ADD VALUE 'arquivada';

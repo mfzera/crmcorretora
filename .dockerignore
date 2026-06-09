@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Worker source (keep package.json for pnpm workspace resolution)
+apps/worker/src
+apps/worker/Dockerfile
+apps/worker/dev.sh
+apps/worker/SETUP.md
+apps/worker/README.md
+apps/worker/.env.example
+
+# Not needed for API build
+assets
+print
+scripts
+
+# Development files
+docker-compose.yml
+*.md
+.vscode
+.idea
+.claude
+.obsidian
+docs
+
+# Dependencies (will be reinstalled)
+**/node_modules
+
+# Build artifacts (will be rebuilt)
+dist
+tmp
+out-tsc
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test/coverage
+coverage
+*.spec.ts
+*.test.ts
+
+# Misc
+output.json
+.env.local
+.env.development

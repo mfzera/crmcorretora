@@ -1,0 +1,1 @@
+ALTER TABLE "documento_venda" ADD COLUMN "item_descricao" varchar(500);

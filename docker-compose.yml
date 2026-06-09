@@ -1,0 +1,153 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: ecotech-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ecotech}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and queues
+  redis:
+    image: redis:7-alpine
+    container_name: ecotech-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO (S3-compatible storage for development)
+  minio:
+    image: minio/minio:latest
+    container_name: ecotech-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_API_CORS_ALLOW_ORIGIN: "*"
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # EcoTech API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecotech-api
+    restart: unless-stopped
+    environment:
+      # Override DATABASE_URL to use local postgres
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ecotech
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: docker-dev-secret-key-change-in-production-min-32-chars
+      JWT_REFRESH_SECRET: docker-refresh-secret-key-change-in-production-min-32-chars
+      JWT_ADMIN_SECRET: docker-admin-secret-key-change-in-production-min-32-chars
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      HOST: 0.0.0.0
+      PORT: 3001
+      PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:-localhost}
+      CLOUDFLARE_R2_ENDPOINT: http://minio:9000
+      STORAGE_PUBLIC_ENDPOINT: ${STORAGE_PUBLIC_ENDPOINT:-http://localhost:9000}
+      CLOUDFLARE_R2_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      CLOUDFLARE_R2_BUCKET: ${CLOUDFLARE_R2_BUCKET:-ecotech-anexos}
+      CLOUDFLARE_R2_BACKUP_BUCKET: ${CLOUDFLARE_R2_BACKUP_BUCKET:-ecotech-backups}
+      CLOUDFLARE_R2_REGION: us-east-1
+      R2_ACCOUNT_ID: local-dev
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      FROM_EMAIL: noreply@yourdomain.com
+      FROM_NAME: EcoTech Sys
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - '3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # EcoTech Worker (BullMQ — backup, renovações, notificações)
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: ecotech-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ecotech
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CLOUDFLARE_R2_ENDPOINT: http://minio:9000
+      CLOUDFLARE_R2_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      CLOUDFLARE_R2_BUCKET: ${CLOUDFLARE_R2_BUCKET:-ecotech-anexos}
+      CLOUDFLARE_R2_BACKUP_BUCKET: ${CLOUDFLARE_R2_BACKUP_BUCKET:-ecotech-backups}
+      CLOUDFLARE_R2_REGION: us-east-1
+      R2_ACCOUNT_ID: local-dev
+      NEON_API_KEY: ${NEON_API_KEY:-}
+      NEON_PROJECT_ID: ${NEON_PROJECT_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local

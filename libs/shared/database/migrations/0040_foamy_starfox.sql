@@ -1,0 +1,1 @@
+ALTER TABLE "subscription" ADD COLUMN "plan_cycle" varchar(20) DEFAULT 'TRIENAL';

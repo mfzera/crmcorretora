@@ -1,0 +1,1 @@
+ALTER TABLE "cotacao" DROP COLUMN "observacoes";

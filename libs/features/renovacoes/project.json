@@ -1,0 +1,19 @@
+{
+  "name": "renovacoes",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/renovacoes/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/features/renovacoes",
+        "main": "libs/features/renovacoes/src/index.ts",
+        "tsConfig": "libs/features/renovacoes/tsconfig.lib.json",
+        "assets": ["libs/features/renovacoes/*.md"]
+      }
+    }
+  }
+}

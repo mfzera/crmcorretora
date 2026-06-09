@@ -1,0 +1,7 @@
+packages:
+  - 'apps/*'
+  - 'libs/**'
+
+autoInstallPeers: true
+patchedDependencies:
+  zod@4.3.6: patches/zod@4.3.6.patch

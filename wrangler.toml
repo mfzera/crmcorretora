@@ -1,0 +1,7 @@
+name = "ecotech-sys"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "apps/web-new/dist/client"
+
+# Variáveis de ambiente definidas no dashboard de cada projeto Cloudflare Pages:
+# ecotech-sys (produção) e ecotech-sys-develop (develop)

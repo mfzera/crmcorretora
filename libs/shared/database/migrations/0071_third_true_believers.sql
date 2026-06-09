@@ -1,0 +1,1 @@
+ALTER TABLE "subscription" ADD COLUMN "modulos_ativos" text[] DEFAULT '{"crm"}' NOT NULL;

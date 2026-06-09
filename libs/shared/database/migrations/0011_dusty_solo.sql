@@ -1,0 +1,1 @@
+ALTER TYPE "public"."entidade_tipo_anexo" ADD VALUE 'endosso';

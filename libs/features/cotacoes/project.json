@@ -1,0 +1,19 @@
+{
+  "name": "cotacoes",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/cotacoes/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/features/cotacoes",
+        "main": "libs/features/cotacoes/src/index.ts",
+        "tsConfig": "libs/features/cotacoes/tsconfig.lib.json",
+        "assets": ["libs/features/cotacoes/*.md"]
+      }
+    }
+  }
+}

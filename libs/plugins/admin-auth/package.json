@@ -1,0 +1,16 @@
+{
+  "name": "@ecotech/plugins/admin-auth",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@ecotech/shared/database": "workspace:*",
+    "@ecotech/shared/utils": "workspace:*",
+    "@fastify/jwt": "^10.0.0",
+    "bcryptjs": "^3.0.3",
+    "fastify": "^5.8.5",
+    "fastify-plugin": "^5.1.0"
+  }
+}

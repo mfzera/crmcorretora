@@ -1,0 +1,19 @@
+{
+  "name": "vendedores",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/vendedores/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/features/vendedores",
+        "main": "libs/features/vendedores/src/index.ts",
+        "tsConfig": "libs/features/vendedores/tsconfig.lib.json",
+        "assets": ["libs/features/vendedores/*.md"]
+      }
+    }
+  }
+}

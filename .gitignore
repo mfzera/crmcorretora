@@ -1,0 +1,102 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+tmp/
+out/
+build/
+out-tsc/
+
+# Next.js
+.next/
+next-env.d.ts
+
+# TypeScript
+*.tsbuildinfo
+
+# Env files
+.env
+.env.local
+.env.production
+.env.development
+apps/api/.env.test
+
+# Logs
+*.log
+npm-debug.log
+yarn-error.log
+testem.log
+lerna-debug.log*
+debug.log
+
+# OS / System Files
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.swp
+*.orig
+*.bak
+
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Cache
+.nx/cache
+.nx/workspace-data
+.cache/
+.sass-cache/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Turborepo
+.turbo/
+
+# Docker
+docker-compose.yml
+docker-compose.override.yml
+.docker/
+*.pid
+*.seed
+*.pid.lock
+
+# Claude Code
+/.claude/
+
+# Documentation
+/docs/
+
+# Misc
+/connect.lock
+/libpeerconnection.log
+/typings
+
+# Wrangler local state
+.wrangler/
+
+# Pack artifacts
+*.tgz
+
+# Temp/uploads locais (nunca commitar arquivos de clientes)
+apps/web/temp/
+
+# Editor local
+.obsidian/
+.vercel

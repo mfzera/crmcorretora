@@ -1,0 +1,1 @@
+ALTER TABLE "workspace2_planilha_prefs" ADD COLUMN "filter_state" jsonb DEFAULT '{}';

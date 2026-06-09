@@ -1,0 +1,1 @@
+ALTER TYPE "public"."tipo_evento_documento" ADD VALUE IF NOT EXISTS 'ENDOSSO_RECUSADO' BEFORE 'ANOTACAO';

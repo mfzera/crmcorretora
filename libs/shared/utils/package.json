@@ -1,0 +1,20 @@
+{
+  "name": "@ecotech/shared/utils",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./env": "./src/env.ts",
+    "./logger": "./src/logger.ts",
+    "./api-helpers": "./src/api-helpers.ts",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@ecotech/shared/types": "workspace:*",
+    "@sendgrid/mail": "^8.1.6",
+    "tslib": "^2.8.1"
+  }
+}

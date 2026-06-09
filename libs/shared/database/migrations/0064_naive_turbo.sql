@@ -1,0 +1,2 @@
+ALTER TABLE "renovacao_comercial" ADD COLUMN "status_antes_perda" "status_renovacao";--> statement-breakpoint
+ALTER TABLE "renovacao_comercial" ADD COLUMN "status_antes_cancelamento" "status_renovacao";

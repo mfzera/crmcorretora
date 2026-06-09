@@ -1,0 +1,19 @@
+{
+  "name": "produtos",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/produtos/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/features/produtos",
+        "main": "libs/features/produtos/src/index.ts",
+        "tsConfig": "libs/features/produtos/tsconfig.lib.json",
+        "assets": ["libs/features/produtos/*.md"]
+      }
+    }
+  }
+}

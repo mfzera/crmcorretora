@@ -1,0 +1,2 @@
+CREATE INDEX "idx_sinistro_lista" ON "sinistro" USING btree ("corretora_id","deleted_at","created_at");--> statement-breakpoint
+CREATE INDEX "idx_sinistro_solicitante_ativo" ON "sinistro" USING btree ("corretora_id","solicitante_id","deleted_at");

@@ -1,0 +1,9 @@
+export { KanbanBoard } from './kanban-board';
+export { KanbanCard } from './kanban-card';
+export { NovaOportunidadeDialog } from './nova-oportunidade-dialog';
+export { EditarOportunidadeDialog } from './editar-oportunidade-dialog';
+export { FecharOportunidadeDialog } from './fechar-oportunidade-dialog';
+export { PerderOportunidadeDialog } from './perder-oportunidade-dialog';
+export { CompartilharOportunidadeSheet } from './compartilhar-oportunidade-sheet';
+export { HistoricoOportunidadeSheet } from './historico-oportunidade-sheet';
+export { SelecionarUsuarioChatDialog } from './selecionar-usuario-chat-dialog';

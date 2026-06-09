@@ -1,0 +1,1 @@
+ALTER TABLE "subscription" ADD COLUMN "asaas_credit_card_token" varchar(255);

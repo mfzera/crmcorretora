@@ -1,0 +1,1 @@
+CREATE INDEX "idx_cotacao_negocio_corretora" ON "cotacao" USING btree ("corretora_id","negocio_corretora");

@@ -1,0 +1,19 @@
+{
+  "name": "plugins-auth",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugins/auth/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/plugins/auth",
+        "main": "libs/plugins/auth/src/index.ts",
+        "tsConfig": "libs/plugins/auth/tsconfig.lib.json",
+        "assets": ["libs/plugins/auth/*.md"]
+      }
+    }
+  }
+}

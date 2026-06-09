@@ -1,0 +1,19 @@
+{
+  "name": "seguradora",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/seguradora/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/features/seguradora",
+        "main": "libs/features/seguradora/src/index.ts",
+        "tsConfig": "libs/features/seguradora/tsconfig.lib.json",
+        "assets": ["libs/features/seguradora/*.md"]
+      }
+    }
+  }
+}

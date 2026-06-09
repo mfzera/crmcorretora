@@ -1,0 +1,19 @@
+{
+  "name": "authorization",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugins/authorization/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/plugins/authorization",
+        "main": "libs/plugins/authorization/src/index.ts",
+        "tsConfig": "libs/plugins/authorization/tsconfig.lib.json",
+        "assets": ["libs/plugins/authorization/*.md"]
+      }
+    }
+  }
+}

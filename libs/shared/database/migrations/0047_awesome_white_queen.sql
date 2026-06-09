@@ -1,0 +1,3 @@
+CREATE INDEX "idx_documento_venda_status_active" ON "documento_venda" USING btree ("corretora_id","status","deleted_at");--> statement-breakpoint
+CREATE INDEX "idx_documento_venda_cadastro" ON "documento_venda" USING btree ("corretora_id","status","created_at");--> statement-breakpoint
+CREATE INDEX "idx_renovacao_workspace" ON "renovacao_comercial" USING btree ("corretora_id","vendedor_id","status","data_vencimento");

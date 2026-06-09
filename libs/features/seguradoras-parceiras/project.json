@@ -1,0 +1,19 @@
+{
+  "name": "seguradoras-parceiras",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/seguradoras-parceiras/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/features/seguradoras-parceiras",
+        "main": "libs/features/seguradoras-parceiras/src/index.ts",
+        "tsConfig": "libs/features/seguradoras-parceiras/tsconfig.lib.json",
+        "assets": ["libs/features/seguradoras-parceiras/*.md"]
+      }
+    }
+  }
+}

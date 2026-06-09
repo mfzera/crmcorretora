@@ -1,0 +1,1 @@
+ALTER TABLE "subscription" ADD COLUMN "seats_courtesy" integer DEFAULT 0 NOT NULL;

@@ -1,0 +1,269 @@
+/**
+ * Testes de Autorização
+ *
+ * Valida que o sistema de permissões está funcionando corretamente
+ */
+
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { build } from '../app.js';
+import type { FastifyInstance } from 'fastify';
+
+describe('Authorization Tests', () => {
+  let app: FastifyInstance;
+  let adminToken: string;
+  let gestorToken: string;
+  let vendedorToken: string;
+
+  beforeAll(async () => {
+    app = await build();
+    await app.ready();
+
+    // Setup: criar tokens de teste
+    // TODO: Implementar geração de tokens de teste
+    adminToken = 'admin-test-token';
+    gestorToken = 'gestor-test-token';
+    vendedorToken = 'vendedor-test-token';
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('Cotações - Ownership', () => {
+    it('Admin deve conseguir acessar todas as cotações', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/cotacoes',
+        headers: {
+          authorization: `Bearer ${adminToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('Vendedor deve conseguir acessar apenas suas cotações', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/cotacoes',
+        headers: {
+          authorization: `Bearer ${vendedorToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      // Todas as cotações devem ser do vendedor
+      body.data.forEach((cotacao: any) => {
+        expect(cotacao.vendedorId).toBe(vendedorToken); // ajustar para ID real
+      });
+    });
+
+    it('Vendedor NÃO deve conseguir editar cotação de outro vendedor', async () => {
+      // Criar uma cotação de outro vendedor
+      const outraCotacaoId = 'id-de-outra-cotacao';
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/api/cotacoes/${outraCotacaoId}`,
+        headers: {
+          authorization: `Bearer ${vendedorToken}`,
+        },
+        payload: {
+          observacoes: 'Tentando editar',
+        },
+      });
+
+      expect(response.statusCode).toBe(403);
+      const body = JSON.parse(response.body);
+      expect(body.error).toContain('permissão');
+    });
+
+    it('Gestor deve conseguir editar cotação de sua equipe', async () => {
+      // Criar uma cotação de um vendedor da equipe do gestor
+      const cotacaoEquipeId = 'id-cotacao-equipe';
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/api/cotacoes/${cotacaoEquipeId}`,
+        headers: {
+          authorization: `Bearer ${gestorToken}`,
+        },
+        payload: {
+          observacoes: 'Editando como gestor',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+  });
+
+  describe('Cotações - Status Validation', () => {
+    it('NÃO deve permitir editar cotação aprovada', async () => {
+      const cotacaoAprovadaId = 'id-cotacao-aprovada';
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/api/cotacoes/${cotacaoAprovadaId}`,
+        headers: {
+          authorization: `Bearer ${adminToken}`,
+        },
+        payload: {
+          observacoes: 'Tentando editar aprovada',
+        },
+      });
+
+      expect(response.statusCode).toBe(403);
+      const body = JSON.parse(response.body);
+      expect(body.error).toContain('status');
+    });
+
+    it('NÃO deve permitir excluir cotação finalizada', async () => {
+      const cotacaoFinalizadaId = 'id-cotacao-finalizada';
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/api/cotacoes/${cotacaoFinalizadaId}`,
+        headers: {
+          authorization: `Bearer ${adminToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('Deve permitir editar cotação em elaboração', async () => {
+      const cotacaoEmElaboracaoId = 'id-cotacao-elaboracao';
+
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/api/cotacoes/${cotacaoEmElaboracaoId}`,
+        headers: {
+          authorization: `Bearer ${vendedorToken}`,
+        },
+        payload: {
+          observacoes: 'Editando em elaboração',
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+  });
+
+  describe('Clientes - Hierarquia', () => {
+    it('Admin deve ver todos os clientes', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/clientes',
+        headers: {
+          authorization: `Bearer ${adminToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.data.length).toBeGreaterThan(0);
+    });
+
+    it('Vendedor deve ver apenas seus clientes', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/clientes',
+        headers: {
+          authorization: `Bearer ${vendedorToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+
+      // Todos os clientes devem ser do vendedor
+      body.data.forEach((cliente: any) => {
+        expect(cliente.vendedorId).toBe(vendedorToken); // ajustar
+      });
+    });
+
+    it('Gestor deve ver clientes de sua equipe', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/clientes',
+        headers: {
+          authorization: `Bearer ${gestorToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(body.data.length).toBeGreaterThan(0);
+
+      // Clientes devem ser do gestor ou de sua equipe
+      // Implementar lógica de verificação
+    });
+  });
+
+  describe('Permissões - Básicas', () => {
+    it('Usuário sem permissão NÃO deve acessar rota protegida', async () => {
+      const tokenSemPermissao = 'token-sem-permissao';
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/api/clientes/123',
+        headers: {
+          authorization: `Bearer ${tokenSemPermissao}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('Usuário com permissão DEVE acessar rota protegida', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/clientes',
+        headers: {
+          authorization: `Bearer ${adminToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('Request sem token deve retornar 401', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/cotacoes',
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('Request com token inválido deve retornar 401', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/cotacoes',
+        headers: {
+          authorization: 'Bearer token-invalido',
+        },
+      });
+
+      expect(response.statusCode).toBe(401);
+    });
+  });
+
+  describe('Multi-tenancy', () => {
+    it('Usuário NÃO deve acessar recursos de outra corretora', async () => {
+      const recursosOutraCorretora = 'id-de-outra-corretora';
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/cotacoes/${recursosOutraCorretora}`,
+        headers: {
+          authorization: `Bearer ${vendedorToken}`,
+        },
+      });
+
+      expect(response.statusCode).toBe(404); // ou 403
+    });
+  });
+});

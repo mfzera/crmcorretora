@@ -1,0 +1,28 @@
+{
+  "name": "web-new",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/web-new/src",
+  "projectType": "application",
+  "tags": ["type:app", "scope:web"],
+  "targets": {
+    "dev": {
+      "command": "vite",
+      "options": {
+        "cwd": "apps/web-new"
+      }
+    },
+    "build": {
+      "command": "vite build",
+      "options": {
+        "cwd": "apps/web-new"
+      },
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "deploy": {
+      "command": "wrangler pages deploy dist/client --project-name=ecotech-web",
+      "options": {
+        "cwd": "apps/web-new"
+      }
+    }
+  }
+}

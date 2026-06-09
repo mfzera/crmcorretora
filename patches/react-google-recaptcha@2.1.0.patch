@@ -1,0 +1,433 @@
+diff --git a/lib/esm/index.js b/lib/esm/index.js
+index 4362fe607072734f823b1be016ca8b83d4d8f63e..8212ca5e76db1a3c154350fc73f950191f1ade81 100644
+--- a/lib/esm/index.js
++++ b/lib/esm/index.js
+@@ -1,4 +1,187 @@
+-import RecaptchaWrapper from "./recaptcha-wrapper";
+-import ReCAPTCHA from "./recaptcha";
+-export default RecaptchaWrapper;
+-export { ReCAPTCHA };
+\ No newline at end of file
++// node_modules/.pnpm/react-google-recaptcha@2.1.0_react@19.2.5/node_modules/react-google-recaptcha/src/recaptcha.js
++import React from "react";
++import PropTypes from "prop-types";
++import { jsx } from "react/jsx-runtime";
++var ReCAPTCHA = class extends React.Component {
++  constructor() {
++    super();
++    this.handleExpired = this.handleExpired.bind(this);
++    this.handleErrored = this.handleErrored.bind(this);
++    this.handleChange = this.handleChange.bind(this);
++    this.handleRecaptchaRef = this.handleRecaptchaRef.bind(this);
++  }
++  getValue() {
++    if (this.props.grecaptcha && this._widgetId !== void 0) {
++      return this.props.grecaptcha.getResponse(this._widgetId);
++    }
++    return null;
++  }
++  getWidgetId() {
++    if (this.props.grecaptcha && this._widgetId !== void 0) {
++      return this._widgetId;
++    }
++    return null;
++  }
++  execute() {
++    const { grecaptcha } = this.props;
++    if (grecaptcha && this._widgetId !== void 0) {
++      return grecaptcha.execute(this._widgetId);
++    } else {
++      this._executeRequested = true;
++    }
++  }
++  executeAsync() {
++    return new Promise((resolve, reject) => {
++      this.executionResolve = resolve;
++      this.executionReject = reject;
++      this.execute();
++    });
++  }
++  reset() {
++    if (this.props.grecaptcha && this._widgetId !== void 0) {
++      this.props.grecaptcha.reset(this._widgetId);
++    }
++  }
++  handleExpired() {
++    if (this.props.onExpired) {
++      this.props.onExpired();
++    } else {
++      this.handleChange(null);
++    }
++  }
++  handleErrored() {
++    if (this.props.onErrored) {
++      this.props.onErrored();
++    }
++    if (this.executionReject) {
++      this.executionReject();
++      delete this.executionResolve;
++      delete this.executionReject;
++    }
++  }
++  handleChange(token) {
++    if (this.props.onChange) {
++      this.props.onChange(token);
++    }
++    if (this.executionResolve) {
++      this.executionResolve(token);
++      delete this.executionReject;
++      delete this.executionResolve;
++    }
++  }
++  explicitRender() {
++    if (this.props.grecaptcha && this.props.grecaptcha.render && this._widgetId === void 0) {
++      const wrapper = document.createElement("div");
++      this._widgetId = this.props.grecaptcha.render(wrapper, {
++        sitekey: this.props.sitekey,
++        callback: this.handleChange,
++        theme: this.props.theme,
++        type: this.props.type,
++        tabindex: this.props.tabindex,
++        "expired-callback": this.handleExpired,
++        "error-callback": this.handleErrored,
++        size: this.props.size,
++        stoken: this.props.stoken,
++        hl: this.props.hl,
++        badge: this.props.badge
++      });
++      this.captcha.appendChild(wrapper);
++    }
++    if (this._executeRequested && this.props.grecaptcha && this._widgetId !== void 0) {
++      this._executeRequested = false;
++      this.execute();
++    }
++  }
++  componentDidMount() {
++    this.explicitRender();
++  }
++  componentDidUpdate() {
++    this.explicitRender();
++  }
++  componentWillUnmount() {
++    if (this._widgetId !== void 0) {
++      this.delayOfCaptchaIframeRemoving();
++      this.reset();
++    }
++  }
++  delayOfCaptchaIframeRemoving() {
++    const temporaryNode = document.createElement("div");
++    document.body.appendChild(temporaryNode);
++    temporaryNode.style.display = "none";
++    while (this.captcha.firstChild) {
++      temporaryNode.appendChild(this.captcha.firstChild);
++    }
++    setTimeout(() => {
++      document.body.removeChild(temporaryNode);
++    }, 5e3);
++  }
++  handleRecaptchaRef(elem) {
++    this.captcha = elem;
++  }
++  render() {
++    const {
++      sitekey,
++      onChange,
++      theme,
++      type,
++      tabindex,
++      onExpired,
++      onErrored,
++      size,
++      stoken,
++      grecaptcha,
++      badge,
++      hl,
++      ...childProps
++    } = this.props;
++    return /* @__PURE__ */ jsx("div", { ...childProps, ref: this.handleRecaptchaRef });
++  }
++};
++ReCAPTCHA.displayName = "ReCAPTCHA";
++ReCAPTCHA.propTypes = {
++  sitekey: PropTypes.string.isRequired,
++  onChange: PropTypes.func,
++  grecaptcha: PropTypes.object,
++  theme: PropTypes.oneOf(["dark", "light"]),
++  type: PropTypes.oneOf(["image", "audio"]),
++  tabindex: PropTypes.number,
++  onExpired: PropTypes.func,
++  onErrored: PropTypes.func,
++  size: PropTypes.oneOf(["compact", "normal", "invisible"]),
++  stoken: PropTypes.string,
++  hl: PropTypes.string,
++  badge: PropTypes.oneOf(["bottomright", "bottomleft", "inline"])
++};
++ReCAPTCHA.defaultProps = {
++  onChange: () => {
++  },
++  theme: "light",
++  type: "image",
++  tabindex: 0,
++  size: "normal",
++  badge: "bottomright"
++};
++
++// node_modules/.pnpm/react-google-recaptcha@2.1.0_react@19.2.5/node_modules/react-google-recaptcha/src/recaptcha-wrapper.js
++import makeAsyncScriptLoader from "react-async-script";
++var callbackName = "onloadcallback";
++var globalName = "grecaptcha";
++function getOptions() {
++  return typeof window !== "undefined" && window.recaptchaOptions || {};
++}
++function getURL() {
++  const dynamicOptions = getOptions();
++  const hostname = dynamicOptions.useRecaptchaNet ? "recaptcha.net" : "www.google.com";
++  return `https://${hostname}/recaptcha/api.js?onload=${callbackName}&render=explicit`;
++}
++var recaptcha_wrapper_default = makeAsyncScriptLoader(getURL, {
++  callbackName,
++  globalName
++})(ReCAPTCHA);
++
++// node_modules/.pnpm/react-google-recaptcha@2.1.0_react@19.2.5/node_modules/react-google-recaptcha/src/index.js
++var src_default = recaptcha_wrapper_default;
++export {
++  ReCAPTCHA,
++  src_default as default
++};
+diff --git a/lib/index.js b/lib/index.js
+index f2abd3762e69a547c18d0e1ac56aae659b66ef41..407b136a2c7b3c73d822b2a0c724a3fe5f21071c 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -1,15 +1,219 @@
+-"use strict";
++var __create = Object.create;
++var __defProp = Object.defineProperty;
++var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
++var __getOwnPropNames = Object.getOwnPropertyNames;
++var __getProtoOf = Object.getPrototypeOf;
++var __hasOwnProp = Object.prototype.hasOwnProperty;
++var __export = (target, all) => {
++  for (var name in all)
++    __defProp(target, name, { get: all[name], enumerable: true });
++};
++var __copyProps = (to, from, except, desc) => {
++  if (from && typeof from === "object" || typeof from === "function") {
++    for (let key of __getOwnPropNames(from))
++      if (!__hasOwnProp.call(to, key) && key !== except)
++        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
++  }
++  return to;
++};
++var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
++  // If the importer is in node compatibility mode or this is not an ESM
++  // file that has been converted to a CommonJS file using a Babel-
++  // compatible transform (i.e. "__esModule" has not been set), then set
++  // "default" to the CommonJS "module.exports" for node compatibility.
++  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
++  mod
++));
++var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+ 
+-exports.__esModule = true;
+-exports["default"] = void 0;
++// node_modules/.pnpm/react-google-recaptcha@2.1.0_react@19.2.5/node_modules/react-google-recaptcha/src/index.js
++var src_exports = {};
++__export(src_exports, {
++  ReCAPTCHA: () => ReCAPTCHA,
++  default: () => src_default
++});
++module.exports = __toCommonJS(src_exports);
+ 
+-var _recaptchaWrapper = _interopRequireDefault(require("./recaptcha-wrapper"));
++// node_modules/.pnpm/react-google-recaptcha@2.1.0_react@19.2.5/node_modules/react-google-recaptcha/src/recaptcha.js
++var import_react = __toESM(require("react"));
++var import_prop_types = __toESM(require("prop-types"));
++var import_jsx_runtime = require("react/jsx-runtime");
++var ReCAPTCHA = class extends import_react.default.Component {
++  constructor() {
++    super();
++    this.handleExpired = this.handleExpired.bind(this);
++    this.handleErrored = this.handleErrored.bind(this);
++    this.handleChange = this.handleChange.bind(this);
++    this.handleRecaptchaRef = this.handleRecaptchaRef.bind(this);
++  }
++  getValue() {
++    if (this.props.grecaptcha && this._widgetId !== void 0) {
++      return this.props.grecaptcha.getResponse(this._widgetId);
++    }
++    return null;
++  }
++  getWidgetId() {
++    if (this.props.grecaptcha && this._widgetId !== void 0) {
++      return this._widgetId;
++    }
++    return null;
++  }
++  execute() {
++    const { grecaptcha } = this.props;
++    if (grecaptcha && this._widgetId !== void 0) {
++      return grecaptcha.execute(this._widgetId);
++    } else {
++      this._executeRequested = true;
++    }
++  }
++  executeAsync() {
++    return new Promise((resolve, reject) => {
++      this.executionResolve = resolve;
++      this.executionReject = reject;
++      this.execute();
++    });
++  }
++  reset() {
++    if (this.props.grecaptcha && this._widgetId !== void 0) {
++      this.props.grecaptcha.reset(this._widgetId);
++    }
++  }
++  handleExpired() {
++    if (this.props.onExpired) {
++      this.props.onExpired();
++    } else {
++      this.handleChange(null);
++    }
++  }
++  handleErrored() {
++    if (this.props.onErrored) {
++      this.props.onErrored();
++    }
++    if (this.executionReject) {
++      this.executionReject();
++      delete this.executionResolve;
++      delete this.executionReject;
++    }
++  }
++  handleChange(token) {
++    if (this.props.onChange) {
++      this.props.onChange(token);
++    }
++    if (this.executionResolve) {
++      this.executionResolve(token);
++      delete this.executionReject;
++      delete this.executionResolve;
++    }
++  }
++  explicitRender() {
++    if (this.props.grecaptcha && this.props.grecaptcha.render && this._widgetId === void 0) {
++      const wrapper = document.createElement("div");
++      this._widgetId = this.props.grecaptcha.render(wrapper, {
++        sitekey: this.props.sitekey,
++        callback: this.handleChange,
++        theme: this.props.theme,
++        type: this.props.type,
++        tabindex: this.props.tabindex,
++        "expired-callback": this.handleExpired,
++        "error-callback": this.handleErrored,
++        size: this.props.size,
++        stoken: this.props.stoken,
++        hl: this.props.hl,
++        badge: this.props.badge
++      });
++      this.captcha.appendChild(wrapper);
++    }
++    if (this._executeRequested && this.props.grecaptcha && this._widgetId !== void 0) {
++      this._executeRequested = false;
++      this.execute();
++    }
++  }
++  componentDidMount() {
++    this.explicitRender();
++  }
++  componentDidUpdate() {
++    this.explicitRender();
++  }
++  componentWillUnmount() {
++    if (this._widgetId !== void 0) {
++      this.delayOfCaptchaIframeRemoving();
++      this.reset();
++    }
++  }
++  delayOfCaptchaIframeRemoving() {
++    const temporaryNode = document.createElement("div");
++    document.body.appendChild(temporaryNode);
++    temporaryNode.style.display = "none";
++    while (this.captcha.firstChild) {
++      temporaryNode.appendChild(this.captcha.firstChild);
++    }
++    setTimeout(() => {
++      document.body.removeChild(temporaryNode);
++    }, 5e3);
++  }
++  handleRecaptchaRef(elem) {
++    this.captcha = elem;
++  }
++  render() {
++    const {
++      sitekey,
++      onChange,
++      theme,
++      type,
++      tabindex,
++      onExpired,
++      onErrored,
++      size,
++      stoken,
++      grecaptcha,
++      badge,
++      hl,
++      ...childProps
++    } = this.props;
++    return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { ...childProps, ref: this.handleRecaptchaRef });
++  }
++};
++ReCAPTCHA.displayName = "ReCAPTCHA";
++ReCAPTCHA.propTypes = {
++  sitekey: import_prop_types.default.string.isRequired,
++  onChange: import_prop_types.default.func,
++  grecaptcha: import_prop_types.default.object,
++  theme: import_prop_types.default.oneOf(["dark", "light"]),
++  type: import_prop_types.default.oneOf(["image", "audio"]),
++  tabindex: import_prop_types.default.number,
++  onExpired: import_prop_types.default.func,
++  onErrored: import_prop_types.default.func,
++  size: import_prop_types.default.oneOf(["compact", "normal", "invisible"]),
++  stoken: import_prop_types.default.string,
++  hl: import_prop_types.default.string,
++  badge: import_prop_types.default.oneOf(["bottomright", "bottomleft", "inline"])
++};
++ReCAPTCHA.defaultProps = {
++  onChange: () => {
++  },
++  theme: "light",
++  type: "image",
++  tabindex: 0,
++  size: "normal",
++  badge: "bottomright"
++};
+ 
+-var _recaptcha = _interopRequireDefault(require("./recaptcha"));
++// node_modules/.pnpm/react-google-recaptcha@2.1.0_react@19.2.5/node_modules/react-google-recaptcha/src/recaptcha-wrapper.js
++var import_react_async_script = __toESM(require("react-async-script"));
++var callbackName = "onloadcallback";
++var globalName = "grecaptcha";
++function getOptions() {
++  return typeof window !== "undefined" && window.recaptchaOptions || {};
++}
++function getURL() {
++  const dynamicOptions = getOptions();
++  const hostname = dynamicOptions.useRecaptchaNet ? "recaptcha.net" : "www.google.com";
++  return `https://${hostname}/recaptcha/api.js?onload=${callbackName}&render=explicit`;
++}
++var recaptcha_wrapper_default = (0, import_react_async_script.default)(getURL, {
++  callbackName,
++  globalName
++})(ReCAPTCHA);
+ 
+-exports.ReCAPTCHA = _recaptcha["default"];
+-
+-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+-
+-var _default = _recaptchaWrapper["default"];
+-exports["default"] = _default;
+\ No newline at end of file
++// node_modules/.pnpm/react-google-recaptcha@2.1.0_react@19.2.5/node_modules/react-google-recaptcha/src/index.js
++var src_default = recaptcha_wrapper_default;

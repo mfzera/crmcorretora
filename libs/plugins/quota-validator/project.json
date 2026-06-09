@@ -1,0 +1,19 @@
+{
+  "name": "quota-validator",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/plugins/quota-validator/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/plugins/quota-validator",
+        "main": "libs/plugins/quota-validator/src/index.ts",
+        "tsConfig": "libs/plugins/quota-validator/tsconfig.lib.json",
+        "assets": ["libs/plugins/quota-validator/*.md"]
+      }
+    }
+  }
+}

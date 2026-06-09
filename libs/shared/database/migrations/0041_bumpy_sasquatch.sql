@@ -1,0 +1,2 @@
+ALTER TABLE "subscription" ADD COLUMN "asaas_payment_id" varchar(255);--> statement-breakpoint
+ALTER TABLE "subscription" ADD CONSTRAINT "subscription_asaas_payment_id_unique" UNIQUE("asaas_payment_id");

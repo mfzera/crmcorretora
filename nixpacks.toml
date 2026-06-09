@@ -1,0 +1,18 @@
+[phases.setup]
+nixPkgs = ['nodejs_20', 'pnpm']
+
+[phases.install]
+cmds = [
+  'pnpm install --frozen-lockfile --ignore-scripts',
+  'pnpm rebuild esbuild'
+]
+
+[phases.build]
+cmds = ['pnpm exec nx build api']
+
+[start]
+cmd = 'node dist/apps/api/main.js'
+
+[variables]
+NODE_ENV = 'production'
+NODE_OPTIONS = '--max-old-space-size=4096'

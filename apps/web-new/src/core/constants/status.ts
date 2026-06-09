@@ -1,0 +1,106 @@
+/**
+ * Constantes de status para o sistema
+ */
+
+export const STATUS_COTACAO = {
+  EM_ELABORACAO: 'EM_ELABORACAO',
+  ENVIADA_CLIENTE: 'ENVIADA_CLIENTE',
+  AGUARDANDO_RESPOSTA: 'AGUARDANDO_RESPOSTA',
+  PERDIDA: 'PERDIDA',
+  EXPIRADA: 'EXPIRADA',
+  CONVERTIDA: 'CONVERTIDA',
+} as const;
+
+export type StatusCotacao = (typeof STATUS_COTACAO)[keyof typeof STATUS_COTACAO];
+
+export const STATUS_PROPOSTA = {
+  AGUARDANDO_ENVIO: 'AGUARDANDO_ENVIO',
+  ENVIADA: 'ENVIADA',
+  EM_ANALISE: 'EM_ANALISE',
+  PENDENTE_DOCUMENTACAO: 'PENDENTE_DOCUMENTACAO',
+  APROVADA: 'APROVADA',
+  REJEITADA: 'REJEITADA',
+  CANCELADA: 'CANCELADA',
+} as const;
+
+export type StatusProposta = (typeof STATUS_PROPOSTA)[keyof typeof STATUS_PROPOSTA];
+
+export const STATUS_RENOVACAO = {
+  NAO_TRABALHADO: 'NAO_TRABALHADO',
+  PENDENTE: 'PENDENTE',
+  EM_PROSPECCAO: 'EM_PROSPECCAO',
+  EM_NEGOCIACAO: 'EM_NEGOCIACAO',
+  AGUARDANDO_CLIENTE: 'AGUARDANDO_CLIENTE',
+  EM_ANDAMENTO: 'EM_ANDAMENTO',
+  CONCLUIDA: 'CONCLUIDA',
+  PERDIDA: 'PERDIDA',
+} as const;
+
+export type StatusRenovacao = (typeof STATUS_RENOVACAO)[keyof typeof STATUS_RENOVACAO];
+
+export const STATUS_DOCUMENTO_VENDA = {
+  AGUARDANDO_CADASTRO: 'AGUARDANDO_CADASTRO',
+  EM_CADASTRO: 'EM_CADASTRO',
+  ATIVO: 'ATIVO',
+  CANCELADO: 'CANCELADO',
+  EXPIRADO: 'EXPIRADO',
+  RENOVACAO: 'RENOVACAO',
+} as const;
+
+export type StatusDocumentoVenda = (typeof STATUS_DOCUMENTO_VENDA)[keyof typeof STATUS_DOCUMENTO_VENDA];
+
+export const PRIORIDADE = {
+  BAIXA: 'BAIXA',
+  MEDIA: 'MEDIA',
+  ALTA: 'ALTA',
+  URGENTE: 'URGENTE',
+} as const;
+
+export type Prioridade = (typeof PRIORIDADE)[keyof typeof PRIORIDADE];
+
+// Labels para exibição
+export const STATUS_COTACAO_LABELS: Record<StatusCotacao, string> = {
+  [STATUS_COTACAO.EM_ELABORACAO]: 'Em Elaboração',
+  [STATUS_COTACAO.ENVIADA_CLIENTE]: 'Enviada ao Cliente',
+  [STATUS_COTACAO.AGUARDANDO_RESPOSTA]: 'Aguardando Resposta',
+  [STATUS_COTACAO.PERDIDA]: 'Perdida',
+  [STATUS_COTACAO.EXPIRADA]: 'Expirada',
+  [STATUS_COTACAO.CONVERTIDA]: 'Convertida',
+};
+
+export const STATUS_PROPOSTA_LABELS: Record<StatusProposta, string> = {
+  [STATUS_PROPOSTA.AGUARDANDO_ENVIO]: 'Aguardando Envio',
+  [STATUS_PROPOSTA.ENVIADA]: 'Enviada',
+  [STATUS_PROPOSTA.EM_ANALISE]: 'Em Análise',
+  [STATUS_PROPOSTA.PENDENTE_DOCUMENTACAO]: 'Pendente Documentação',
+  [STATUS_PROPOSTA.APROVADA]: 'Aprovada',
+  [STATUS_PROPOSTA.REJEITADA]: 'Rejeitada',
+  [STATUS_PROPOSTA.CANCELADA]: 'Cancelada',
+};
+
+export const STATUS_RENOVACAO_LABELS: Record<StatusRenovacao, string> = {
+  [STATUS_RENOVACAO.NAO_TRABALHADO]: 'Não Trabalhado',
+  [STATUS_RENOVACAO.PENDENTE]: 'Pendente',
+  [STATUS_RENOVACAO.EM_PROSPECCAO]: 'Em Prospecção',
+  [STATUS_RENOVACAO.EM_NEGOCIACAO]: 'Em Negociação',
+  [STATUS_RENOVACAO.AGUARDANDO_CLIENTE]: 'Aguardando Cliente',
+  [STATUS_RENOVACAO.EM_ANDAMENTO]: 'Em Andamento',
+  [STATUS_RENOVACAO.CONCLUIDA]: 'Concluída',
+  [STATUS_RENOVACAO.PERDIDA]: 'Perdida',
+};
+
+export const STATUS_DOCUMENTO_VENDA_LABELS: Record<StatusDocumentoVenda, string> = {
+  [STATUS_DOCUMENTO_VENDA.AGUARDANDO_CADASTRO]: 'Aguardando Cadastro',
+  [STATUS_DOCUMENTO_VENDA.EM_CADASTRO]: 'Em Cadastro',
+  [STATUS_DOCUMENTO_VENDA.ATIVO]: 'Ativo',
+  [STATUS_DOCUMENTO_VENDA.CANCELADO]: 'Cancelado',
+  [STATUS_DOCUMENTO_VENDA.EXPIRADO]: 'Expirado',
+  [STATUS_DOCUMENTO_VENDA.RENOVACAO]: 'Renovação',
+};
+
+export const PRIORIDADE_LABELS: Record<Prioridade, string> = {
+  [PRIORIDADE.BAIXA]: 'Baixa',
+  [PRIORIDADE.MEDIA]: 'Média',
+  [PRIORIDADE.ALTA]: 'Alta',
+  [PRIORIDADE.URGENTE]: 'Urgente',
+};

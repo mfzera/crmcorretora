@@ -1,0 +1,1 @@
+ALTER TABLE "admin" ADD COLUMN "avatar_r2_key" varchar(500);

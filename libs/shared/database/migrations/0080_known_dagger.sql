@@ -1,0 +1,1 @@
+ALTER TABLE "cotacao" ADD COLUMN "is_fechado" boolean DEFAULT false NOT NULL;
