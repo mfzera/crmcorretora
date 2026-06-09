@@ -669,8 +669,8 @@ const documentosVendaRoutes: FastifyPluginAsyncZod = async function (fastify) {
           } as any,
           limit,
           offset,
-          orderBy: (documentosVenda, { asc }) => [
-            asc(documentosVenda.vigenciaFim),
+          orderBy: (documentosVenda, { desc }) => [
+            desc(documentosVenda.createdAt),
           ],
         }),
         db
