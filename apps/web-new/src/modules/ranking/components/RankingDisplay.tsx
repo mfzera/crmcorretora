@@ -219,6 +219,7 @@ export function RankingDisplay() {
                 activeCategory={activeCategory}
                 vendedorMetricas={vendedorMetricas}
                 usuariosMap={usuariosMap}
+                isFullscreen={isFullscreen}
               />
             </Suspense>
           </div>
