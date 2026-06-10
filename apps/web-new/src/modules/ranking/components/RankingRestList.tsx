@@ -31,10 +31,10 @@ export function RankingRestList({
   if (visible.length === 0) return null;
 
   return (
-    <div className="flex flex-col shrink-0 max-h-[45%] min-h-0 overflow-hidden border-t border-white/8">
+    <div className="flex flex-col shrink-0 max-h-[45%] min-h-0 overflow-hidden border-t border-white/[0.06]">
       {/* Cabeçalho */}
-      <div className="shrink-0 px-4 sm:px-8 py-1 bg-[#0d0d0d]">
-        <span className={cn('text-[9px] font-bold uppercase tracking-widest opacity-40', catStyle.colorClass)}>
+      <div className="shrink-0 px-4 sm:px-8 py-1 bg-[#0b0c10]">
+        <span className={cn('text-[9px] font-bold uppercase tracking-[0.08em] opacity-40', catStyle.colorClass)}>
           {isFullscreen ? '4º e 5º lugar' : 'Demais colocados'}
         </span>
       </div>

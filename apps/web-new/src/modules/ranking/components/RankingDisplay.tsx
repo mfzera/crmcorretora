@@ -151,7 +151,7 @@ export function RankingDisplay() {
   }, [rankingsByMetric]);
 
   return (
-    <div ref={rootRef} className="flex flex-col h-full overflow-hidden bg-[#0a0a0a]">
+    <div ref={rootRef} className="flex flex-col h-full overflow-hidden bg-[#080910]">
 
       {/* ── Filtros: período + tipo doc — oculto em fullscreen ── */}
       {!isFullscreen && (
@@ -227,7 +227,7 @@ export function RankingDisplay() {
       )}
 
       {/* ── Metas & campanhas ── */}
-      <div className="shrink-0 h-14 border-t border-white/8 bg-[#111] overflow-hidden">
+      <div className="shrink-0 h-14 border-t border-white/[0.06] bg-[#0d0e14] overflow-hidden">
         <Suspense fallback={<div className="h-full" />}>
           <MetasCampanhasPanel metas={metas} campanhas={campanhas} />
         </Suspense>
@@ -243,7 +243,7 @@ function PodiumSkeleton() {
         {[1.0, 1.3, 1.0].map((scale, i) => (
           <div
             key={i}
-            className="flex-1 rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse"
+            className="flex-1 rounded-2xl bg-white/[0.025] border border-white/[0.04] animate-pulse"
             style={{ height: `${Math.round(160 * scale)}px` }}
           />
         ))}

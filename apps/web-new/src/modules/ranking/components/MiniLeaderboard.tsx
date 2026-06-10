@@ -35,12 +35,12 @@ const rankingConfig: Record<TipoRanking, CfgEntry> = {
   pontos: {
     title: 'Pontos',
     Icon: Trophy,
-    colorClass: 'text-yellow-400',
-    bgClass: 'bg-yellow-500/10',
-    ringClass: 'ring-yellow-500/20',
-    firstBorderColor: 'border-l-yellow-400/70',
-    firstGradient: 'bg-gradient-to-r from-yellow-500/10 to-transparent',
-    firstRingColor: 'ring-yellow-400/50',
+    colorClass: 'text-amber-400',
+    bgClass: 'bg-amber-400/[0.08]',
+    ringClass: 'ring-amber-400/[0.18]',
+    firstBorderColor: 'border-l-amber-400/60',
+    firstGradient: 'bg-gradient-to-r from-amber-400/[0.08] to-transparent',
+    firstRingColor: 'ring-amber-400/40',
     getValue: (item) => ({
       text: item.pontos.toLocaleString('pt-BR'),
       unit: 'pts',
@@ -50,12 +50,12 @@ const rankingConfig: Record<TipoRanking, CfgEntry> = {
   premio: {
     title: 'Prêmio Líquido',
     Icon: TrendingUp,
-    colorClass: 'text-green-400',
-    bgClass: 'bg-green-500/10',
-    ringClass: 'ring-green-500/20',
-    firstBorderColor: 'border-l-green-400/70',
-    firstGradient: 'bg-gradient-to-r from-green-500/10 to-transparent',
-    firstRingColor: 'ring-green-400/50',
+    colorClass: 'text-emerald-400',
+    bgClass: 'bg-emerald-400/[0.08]',
+    ringClass: 'ring-emerald-400/[0.18]',
+    firstBorderColor: 'border-l-emerald-400/60',
+    firstGradient: 'bg-gradient-to-r from-emerald-400/[0.08] to-transparent',
+    firstRingColor: 'ring-emerald-400/40',
     getValue: (_item, m) => ({
       text: m && m.totalPremio > 0 ? brlCompact(m.totalPremio) : '—',
       unit: '',
@@ -65,12 +65,12 @@ const rankingConfig: Record<TipoRanking, CfgEntry> = {
   comissao: {
     title: 'Comissão Média',
     Icon: Percent,
-    colorClass: 'text-purple-400',
-    bgClass: 'bg-purple-500/10',
-    ringClass: 'ring-purple-500/20',
-    firstBorderColor: 'border-l-purple-400/70',
-    firstGradient: 'bg-gradient-to-r from-purple-500/10 to-transparent',
-    firstRingColor: 'ring-purple-400/50',
+    colorClass: 'text-violet-400',
+    bgClass: 'bg-violet-400/[0.08]',
+    ringClass: 'ring-violet-400/[0.18]',
+    firstBorderColor: 'border-l-violet-400/60',
+    firstGradient: 'bg-gradient-to-r from-violet-400/[0.08] to-transparent',
+    firstRingColor: 'ring-violet-400/40',
     getValue: (_item, m) => ({
       text: m && m.mediaComissao > 0 ? m.mediaComissao.toFixed(1) : '—',
       unit: m && m.mediaComissao > 0 ? '%' : '',
@@ -80,12 +80,12 @@ const rankingConfig: Record<TipoRanking, CfgEntry> = {
   quantidade: {
     title: 'Qtd. Vendas',
     Icon: BarChart3,
-    colorClass: 'text-orange-400',
-    bgClass: 'bg-orange-500/10',
-    ringClass: 'ring-orange-500/20',
-    firstBorderColor: 'border-l-orange-400/70',
-    firstGradient: 'bg-gradient-to-r from-orange-500/10 to-transparent',
-    firstRingColor: 'ring-orange-400/50',
+    colorClass: 'text-blue-400',
+    bgClass: 'bg-blue-400/[0.08]',
+    ringClass: 'ring-blue-400/[0.18]',
+    firstBorderColor: 'border-l-blue-400/60',
+    firstGradient: 'bg-gradient-to-r from-blue-400/[0.08] to-transparent',
+    firstRingColor: 'ring-blue-400/40',
     getValue: (_item, m) => ({
       text: m && m.quantidadeVendas > 0 ? m.quantidadeVendas.toLocaleString('pt-BR') : '—',
       unit: m && m.quantidadeVendas > 0 ? 'vnd' : '',
@@ -95,12 +95,12 @@ const rankingConfig: Record<TipoRanking, CfgEntry> = {
   ticketMedio: {
     title: 'Ticket Médio',
     Icon: Ticket,
-    colorClass: 'text-cyan-400',
-    bgClass: 'bg-cyan-500/10',
-    ringClass: 'ring-cyan-500/20',
-    firstBorderColor: 'border-l-cyan-400/70',
-    firstGradient: 'bg-gradient-to-r from-cyan-500/10 to-transparent',
-    firstRingColor: 'ring-cyan-400/50',
+    colorClass: 'text-cyan-300',
+    bgClass: 'bg-cyan-400/[0.07]',
+    ringClass: 'ring-cyan-300/[0.16]',
+    firstBorderColor: 'border-l-cyan-300/60',
+    firstGradient: 'bg-gradient-to-r from-cyan-300/[0.07] to-transparent',
+    firstRingColor: 'ring-cyan-300/35',
     getValue: (_item, m) => ({
       text: m && m.ticketMedio > 0 ? brlCompact(m.ticketMedio) : '—',
       unit: '',
@@ -112,14 +112,14 @@ const rankingConfig: Record<TipoRanking, CfgEntry> = {
 function PositionBadge({ posicao }: { posicao: number }) {
   const base = 'flex items-center justify-center h-6 w-6 rounded-full text-[10px] font-black';
   if (posicao === 1)
-    return <div className={cn(base, 'bg-yellow-500/20 ring-1 ring-yellow-500/40 text-yellow-400')}>1</div>;
+    return <div className={cn(base, 'bg-amber-400/[0.15] ring-1 ring-amber-400/30 text-amber-300')}>1</div>;
   if (posicao === 2)
-    return <div className={cn(base, 'bg-slate-500/20 ring-1 ring-slate-500/30 text-slate-300')}>2</div>;
+    return <div className={cn(base, 'bg-white/[0.07] ring-1 ring-white/[0.12] text-white/60')}>2</div>;
   if (posicao === 3)
-    return <div className={cn(base, 'bg-amber-700/20 ring-1 ring-amber-600/30 text-amber-500')}>3</div>;
+    return <div className={cn(base, 'bg-amber-600/[0.12] ring-1 ring-amber-500/[0.20] text-amber-400/80')}>3</div>;
   return (
     <div className="flex items-center justify-center h-6 w-6">
-      <span className="text-[10px] font-bold text-white/25">#{posicao}</span>
+      <span className="text-[10px] font-bold text-white/[0.18]">#{posicao}</span>
     </div>
   );
 }
@@ -144,21 +144,21 @@ export function MiniLeaderboard({
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Header */}
-      <div className={cn('flex items-center gap-2 px-4 py-2 border-b border-white/8 shrink-0', bgClass)}>
+      <div className={cn('flex items-center gap-2 px-4 py-2 border-b border-white/[0.06] shrink-0 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]', bgClass)}>
         <div className={cn('flex items-center justify-center h-6 w-6 rounded-md shrink-0', bgClass, 'ring-1', ringClass)}>
           <Icon className={cn('h-3.5 w-3.5', colorClass)} />
         </div>
-        <h3 className="text-white/80 font-semibold text-xs tracking-tight truncate">{title}</h3>
+        <h3 className="text-white/75 font-medium text-xs truncate">{title}</h3>
         <span className="ml-auto text-[10px] text-white/25 shrink-0 tabular-nums">
           {!isLoading && `${ranking.length}`}
         </span>
       </div>
 
       {/* Column labels */}
-      <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2 px-4 py-1 border-b border-white/5 shrink-0">
+      <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2 px-4 py-1 border-b border-white/[0.04] shrink-0">
         <span />
-        <span className="text-[9px] uppercase tracking-widest text-white/20 font-semibold">Vendedor</span>
-        <span className={cn('text-[9px] uppercase tracking-widest font-semibold', colorClass, 'opacity-60')}>
+        <span className="text-[9px] uppercase tracking-[0.08em] text-white/20 font-semibold">Vendedor</span>
+        <span className={cn('text-[9px] uppercase tracking-[0.08em] font-semibold', colorClass, 'opacity-60')}>
           {tipoRanking === 'pontos' ? 'Pts' : tipoRanking === 'premio' ? 'R$' : tipoRanking === 'comissao' ? '%' : tipoRanking === 'ticketMedio' ? 'R$' : 'Qtd'}
         </span>
       </div>
@@ -195,12 +195,12 @@ export function MiniLeaderboard({
                 <div
                   key={item.usuarioId}
                   className={cn(
-                    'grid grid-cols-[24px_1fr_auto] items-center border-b transition-colors',
+                    'grid grid-cols-[24px_1fr_auto] items-center border-b transition-colors duration-150',
                     isFirst
                       ? cn('px-4 py-3 gap-3 border-l-2 border-b-white/[0.06]', firstBorderColor, firstGradient)
                       : isTop3
-                      ? 'px-4 py-1.5 gap-2 border-white/[0.03] bg-white/[0.025]'
-                      : 'px-4 py-1.5 gap-2 border-white/[0.03] hover:bg-white/[0.015]',
+                      ? 'px-4 py-1.5 gap-2 border-white/[0.03] bg-white/[0.02]'
+                      : 'px-4 py-1.5 gap-2 border-white/[0.03] hover:bg-white/[0.02]',
                   )}
                 >
                   <PositionBadge posicao={item.posicao} />
@@ -212,10 +212,10 @@ export function MiniLeaderboard({
                         className={cn(
                           'font-bold',
                           isFirst ? 'text-[11px]' : 'text-[9px]',
-                          item.posicao === 1 && 'bg-yellow-500/20 text-yellow-300',
-                          item.posicao === 2 && 'bg-slate-500/20 text-slate-300',
-                          item.posicao === 3 && 'bg-amber-700/20 text-amber-400',
-                          item.posicao > 3 && 'bg-white/8 text-white/50',
+                          item.posicao === 1 && 'bg-amber-400/[0.15] text-amber-300',
+                          item.posicao === 2 && 'bg-white/[0.07] text-white/60',
+                          item.posicao === 3 && 'bg-amber-600/[0.12] text-amber-400/80',
+                          item.posicao > 3 && 'bg-white/[0.06] text-white/50',
                         )}
                       >
                         {getInitials(item.nome)}

@@ -43,16 +43,16 @@ export function RankingFilterBar({
   onToggleBackground,
 }: RankingFilterBarProps) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/8 bg-[#0f0f0f] shrink-0 overflow-x-auto">
+    <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/[0.06] bg-[#0a0b10] shrink-0 overflow-x-auto">
       {/* Período */}
-      <div className="flex items-center gap-0.5 bg-white/5 rounded-lg p-0.5 shrink-0">
+      <div className="flex items-center gap-0.5 bg-white/[0.04] rounded-lg p-0.5 shrink-0">
         {(Object.keys(PERIODO_LABELS) as Periodo[]).map((p) => (
           <button
             key={p}
             onClick={() => onPeriodoChange(p)}
             className={cn(
               'text-[10px] px-2.5 py-1 rounded-md transition-colors font-medium whitespace-nowrap',
-              periodo === p ? 'bg-white/15 text-white' : 'text-white/35 hover:text-white/60',
+              periodo === p ? 'bg-white/[0.12] text-white' : 'text-white/35 hover:text-white/60',
             )}
           >
             {PERIODO_LABELS[p]}
@@ -60,7 +60,7 @@ export function RankingFilterBar({
         ))}
       </div>
 
-      <div className="h-4 w-px bg-white/10 shrink-0" />
+      <div className="h-4 w-px bg-white/[0.08] shrink-0" />
 
       {/* Tipo doc */}
       <div className="flex items-center gap-0.5 shrink-0">
@@ -106,7 +106,7 @@ export function RankingFilterBar({
           onClick={onViewModeToggle}
           className={cn(
             'flex items-center gap-1 text-[10px] px-2 py-1 rounded-md transition-colors font-medium',
-            'text-white/50 hover:text-white/80 hover:bg-white/8',
+            'text-white/50 hover:text-white/80 hover:bg-white/[0.06]',
           )}
         >
           {viewMode === 'modern' ? (
