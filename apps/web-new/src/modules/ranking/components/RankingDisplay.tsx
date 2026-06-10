@@ -308,7 +308,7 @@ export function RankingDisplay() {
     <div ref={rootRef} className="flex flex-col h-full overflow-hidden bg-[#0a0a0a]">
 
       {/* ── BANNER ── slim: apenas fundo + chips compactos de atividade */}
-      <div className="relative shrink-0 h-[90px] sm:h-[110px] overflow-hidden">
+      <div className="relative shrink-0 h-[110px] overflow-hidden">
         {bgImage ? (
           <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
@@ -319,7 +319,7 @@ export function RankingDisplay() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
         {/* Chips compactos de atividade — bottom-right do banner */}
-        <div className="absolute bottom-2.5 right-3 z-10 hidden sm:flex flex-row gap-2 items-end">
+        <div className="absolute bottom-2.5 right-3 z-10 flex flex-row gap-2 items-end">
           {ultimaConquista && (
             <div className="flex items-center gap-2 pl-2.5 pr-3 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 shadow-lg max-w-[260px]">
               <Trophy className="h-3.5 w-3.5 text-amber-400 shrink-0" />
@@ -371,14 +371,14 @@ export function RankingDisplay() {
       </div>
 
       {/* ── BARRA DE FILTROS ── */}
-      <div className="flex items-center gap-3 px-3 sm:px-4 py-1.5 border-b border-white/8 bg-[#0f0f0f] shrink-0 overflow-x-auto">
+      <div className="flex items-center gap-3 px-4 py-1.5 border-b border-white/8 bg-[#0f0f0f] shrink-0 overflow-x-auto">
         <div className="flex items-center gap-0.5 bg-white/5 rounded-lg p-0.5 shrink-0">
           {(Object.keys(periodoLabels) as Periodo[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriodo(p)}
               className={cn(
-                'text-[10px] px-2 sm:px-2.5 py-1 rounded-md transition-colors font-medium whitespace-nowrap',
+                'text-[10px] px-2.5 py-1 rounded-md transition-colors font-medium whitespace-nowrap',
                 periodo === p ? 'bg-white/15 text-white' : 'text-white/35 hover:text-white/60',
               )}
             >
@@ -424,7 +424,7 @@ export function RankingDisplay() {
       {/* ── GRID 4 RANKINGS ── */}
       {/* wrapper flex-1 min-h-0 → grid h-full garante height explícito para 1fr funcionar */}
       <div className="flex-1 min-h-0">
-        <div className="h-full grid grid-cols-2 grid-rows-2 lg:grid-cols-4 lg:grid-rows-1 gap-px bg-white/5 overflow-hidden">
+        <div className="h-full grid grid-cols-4 gap-px bg-white/5 overflow-hidden">
           <div className="flex flex-col bg-[#0f0f0f] overflow-hidden">
             <MiniLeaderboard
               tipoRanking="premio"

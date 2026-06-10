@@ -144,7 +144,7 @@ export function MiniLeaderboard({
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Header */}
-      <div className={cn('flex items-center gap-2 px-3 sm:px-4 py-2 border-b border-white/8 shrink-0', bgClass)}>
+      <div className={cn('flex items-center gap-2 px-4 py-2 border-b border-white/8 shrink-0', bgClass)}>
         <div className={cn('flex items-center justify-center h-6 w-6 rounded-md shrink-0', bgClass, 'ring-1', ringClass)}>
           <Icon className={cn('h-3.5 w-3.5', colorClass)} />
         </div>
@@ -155,7 +155,7 @@ export function MiniLeaderboard({
       </div>
 
       {/* Column labels */}
-      <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2 px-3 sm:px-4 py-1 border-b border-white/5 shrink-0">
+      <div className="grid grid-cols-[24px_1fr_auto] items-center gap-2 px-4 py-1 border-b border-white/5 shrink-0">
         <span />
         <span className="text-[9px] uppercase tracking-widest text-white/20 font-semibold">Vendedor</span>
         <span className={cn('text-[9px] uppercase tracking-widest font-semibold', colorClass, 'opacity-60')}>
@@ -168,7 +168,7 @@ export function MiniLeaderboard({
         {isLoading ? (
           <div className="space-y-px pt-1">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="grid grid-cols-[24px_1fr_auto] items-center gap-2 px-3 sm:px-4 py-1.5">
+              <div key={i} className="grid grid-cols-[24px_1fr_auto] items-center gap-2 px-4 py-1.5">
                 <Skeleton className="h-6 w-6 rounded-full bg-white/8" />
                 <div className="flex items-center gap-2">
                   <Skeleton className="h-7 w-7 rounded-full bg-white/8 shrink-0" />
@@ -197,10 +197,10 @@ export function MiniLeaderboard({
                   className={cn(
                     'grid grid-cols-[24px_1fr_auto] items-center border-b transition-colors',
                     isFirst
-                      ? cn('px-3 sm:px-4 py-3 gap-3 border-l-2 border-b-white/[0.06]', firstBorderColor, firstGradient)
+                      ? cn('px-4 py-3 gap-3 border-l-2 border-b-white/[0.06]', firstBorderColor, firstGradient)
                       : isTop3
-                      ? 'px-3 sm:px-4 py-1.5 gap-2 border-white/[0.03] bg-white/[0.025]'
-                      : 'px-3 sm:px-4 py-1.5 gap-2 border-white/[0.03] hover:bg-white/[0.015]',
+                      ? 'px-4 py-1.5 gap-2 border-white/[0.03] bg-white/[0.025]'
+                      : 'px-4 py-1.5 gap-2 border-white/[0.03] hover:bg-white/[0.015]',
                   )}
                 >
                   <PositionBadge posicao={item.posicao} />
