@@ -31,6 +31,14 @@ export function RankingDisplay() {
   const [viewMode, setViewMode] = useState<'modern' | 'classic'>('modern');
   const [showBackground, setShowBackground] = useState(true);
 
+  // Alterna entre pódio e grade a cada 15 minutos
+  useEffect(() => {
+    const id = setInterval(() => {
+      setViewMode((v) => (v === 'modern' ? 'classic' : 'modern'));
+    }, 15 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const rootRef = useRef<HTMLDivElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
@@ -204,17 +212,15 @@ export function RankingDisplay() {
               </Suspense>
             </div>
 
-            {/* Lista 4+ — apenas em tela cheia (TV) */}
-            {isFullscreen && (
-              <Suspense fallback={null}>
-                <RankingRestList
-                  items={rest}
-                  activeCategory={activeCategory}
-                  vendedorMetricas={vendedorMetricas}
-                  usuariosMap={usuariosMap}
-                />
-              </Suspense>
-            )}
+            {/* Lista 4+ — sempre visível */}
+            <Suspense fallback={null}>
+              <RankingRestList
+                items={rest}
+                activeCategory={activeCategory}
+                vendedorMetricas={vendedorMetricas}
+                usuariosMap={usuariosMap}
+              />
+            </Suspense>
           </div>
         </>
       )}
