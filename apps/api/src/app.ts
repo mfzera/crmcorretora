@@ -112,7 +112,7 @@ export async function buildApp() {
       'X-Request-ID',
       'ngrok-skip-browser-warning',
     ],
-    exposedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    exposedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'Server-Timing'],
   });
 
   await app.register(helmet, {

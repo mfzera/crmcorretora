@@ -58,6 +58,12 @@ const envSchema = z.object({
 
   // Observabilidade
   SENTRY_DSN: z.string().optional(),
+  // Taxa de amostragem de traces (0..1). Permite densificar a coleta durante
+  // janelas de diagnóstico de performance sem alterar código. Default: 0.2 prod.
+  SENTRY_TRACES_SAMPLE_RATE: z.preprocess(
+    (v) => (v === '' || v === undefined || v === null ? undefined : v),
+    z.coerce.number().min(0).max(1).optional(),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;
