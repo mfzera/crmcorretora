@@ -40,6 +40,7 @@ import { cancelDocumentEntries } from '../../utils/comissao-lancamentos.js';
 import { withCache, invalidateDocumentosVendaCache, getAvatarUrl } from '../../utils/cache.js';
 import { sanitizeUser } from '../../utils/sanitize-user.js';
 import { resolveVendedorPrincipal } from '../../utils/resolve-vendedor.js';
+import { rankingSSE } from '../../services/ranking-sse.js';
 import documentosVendaAnexosRoutes from './anexos.js';
 
 const documentosVendaRoutes: FastifyPluginAsyncZod = async function (fastify) {
@@ -250,6 +251,8 @@ const documentosVendaRoutes: FastifyPluginAsyncZod = async function (fastify) {
 
       // Increment quota
       await fastify.incrementQuota(request.corretoraId, 'venda');
+
+      rankingSSE.emit(request.corretoraId, 'ranking-updated');
 
       return reply.status(201).send({
         success: true,
@@ -1448,6 +1451,8 @@ const documentosVendaRoutes: FastifyPluginAsyncZod = async function (fastify) {
           console.error('Erro ao verificar reconhecimentos após aprovação:', err);
         });
       });
+
+      rankingSSE.emit(request.corretoraId, 'ranking-updated');
 
       return {
         ...ok(updated),

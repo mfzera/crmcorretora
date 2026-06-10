@@ -12,6 +12,7 @@ import { eq, and, isNull, gte, lte, sql, desc } from 'drizzle-orm';
 import { authorize, requireModule } from '@ecotech/plugins/authorization';
 import { rankingDocs } from '../../docs/gamificacao/schemas.js';
 import { ok } from '../../docs/index.js';
+import { rankingSSE } from '../../services/ranking-sse.js';
 
 const PONTOS_BADGE = 10;
 const PONTOS_META = 50;
@@ -49,6 +50,37 @@ function defaultPeriodo(): { inicio: string; fim: string } {
 const rankingRoutes: FastifyPluginAsyncZod = async function (fastify) {
   fastify.addHook('preHandler', fastify.authenticate);
   fastify.addHook('preHandler', requireModule('gamificacao'));
+
+  // SSE — mantém conexão aberta e emite 'ranking-updated' quando há novos dados
+  fastify.get(
+    '/events',
+    { preHandler: [authorize(['workspace:acessar'])] },
+    async (request, reply) => {
+      reply.hijack();
+      reply.raw.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      });
+      reply.raw.write(':ok\n\n');
+
+      const corretoraId = request.corretoraId;
+      rankingSSE.add(corretoraId, reply.raw);
+
+      const keepAlive = setInterval(() => {
+        try { reply.raw.write(':ping\n\n'); } catch { /* conexão fechada */ }
+      }, 25_000);
+
+      await new Promise<void>((resolve) => {
+        request.raw.on('close', () => {
+          clearInterval(keepAlive);
+          rankingSSE.remove(corretoraId, reply.raw);
+          resolve();
+        });
+      });
+    },
+  );
 
   fastify.get(
     '/',

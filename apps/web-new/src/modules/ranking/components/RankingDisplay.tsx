@@ -16,6 +16,7 @@ import { RankingControls } from './RankingControls';
 import { MetasCampanhasPanel } from './MetasCampanhasPanel';
 import { MiniLeaderboard } from './MiniLeaderboard';
 import { type VendedorMetricas, type TipoDoc } from './LeaderboardTable';
+import { useRankingSSE } from '../hooks/useRankingSSE';
 
 type Periodo = 'mes_atual' | 'mes_anterior' | 'trimestre' | 'ano';
 
@@ -138,7 +139,9 @@ export function RankingDisplay() {
   const { data: rankingData, isLoading: rankingLoading } = useRankingGamificacao(params);
   const ranking = rankingData?.ranking ?? [];
 
-  // Última venda — polling 15s
+  useRankingSSE();
+
+  // Última venda — atualizada via SSE
   const { data: ultimaVendaDocs } = useQuery({
     queryKey: ['ranking-ultima-venda'],
     queryFn: async () => {
@@ -150,7 +153,6 @@ export function RankingDisplay() {
       });
       return Array.isArray(res) ? res : ((res as any)?.data ?? []);
     },
-    refetchInterval: 15_000,
     retry: false,
     staleTime: 0,
   });
