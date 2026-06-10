@@ -1,126 +1,47 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Trophy, Zap } from 'lucide-react';
-import { dayjs, fromNow } from '@/core/utils/date-utils';
-import { api } from '@/infra/http/api';
-import {
-  useRankingGamificacao,
-  useUltimaConquista,
-  useMetasAtivas,
-  useCampanhasAtivas,
-} from '@/modules/gamificacao/http';
-import { type RankingItem } from '@/modules/gamificacao/http';
+import { lazy, Suspense, useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { cn } from '@/core/utils';
-import { Avatar, AvatarFallback, AvatarImage } from '@/core/ui/avatar';
-import { RankingControls } from './RankingControls';
-import { MetasCampanhasPanel } from './MetasCampanhasPanel';
-import { MiniLeaderboard } from './MiniLeaderboard';
-import { type VendedorMetricas, type TipoDoc } from './LeaderboardTable';
+import { CATEGORY_STYLE } from './RankingPodium';
+import { type TipoDoc, type TipoRanking } from './LeaderboardTable';
+import { CategoryNav, CATEGORIES, ROTATION_INTERVAL } from './CategoryNav';
+import { RankingFilterBar } from './RankingFilterBar';
+import { useRankingData, getPeriodo, type Periodo } from '../hooks/useRankingData';
 import { useRankingSSE } from '../hooks/useRankingSSE';
 
-type Periodo = 'mes_atual' | 'mes_anterior' | 'trimestre' | 'ano';
-
-const periodoLabels: Record<Periodo, string> = {
-  mes_atual: 'Mês atual',
-  mes_anterior: 'Mês ant.',
-  trimestre: '3 meses',
-  ano: 'Ano',
-};
-
-const tipoDocLabels: Record<TipoDoc, string> = {
-  todos: 'Todos',
-  novo: 'Novo',
-  renovacao: 'Renovação',
-};
-
-function getPeriodo(p: Periodo): { dataInicio: string; dataFim: string } {
-  const hoje = dayjs();
-  switch (p) {
-    case 'mes_atual':
-      return {
-        dataInicio: hoje.startOf('month').format('YYYY-MM-DD'),
-        dataFim: hoje.endOf('month').format('YYYY-MM-DD'),
-      };
-    case 'mes_anterior': {
-      const ant = hoje.subtract(1, 'month');
-      return {
-        dataInicio: ant.startOf('month').format('YYYY-MM-DD'),
-        dataFim: ant.endOf('month').format('YYYY-MM-DD'),
-      };
-    }
-    case 'trimestre':
-      return {
-        dataInicio: hoje.subtract(2, 'month').startOf('month').format('YYYY-MM-DD'),
-        dataFim: hoje.endOf('month').format('YYYY-MM-DD'),
-      };
-    case 'ano':
-      return {
-        dataInicio: hoje.startOf('year').format('YYYY-MM-DD'),
-        dataFim: hoje.endOf('year').format('YYYY-MM-DD'),
-      };
-  }
-}
-
-function initials(name: string) {
-  const parts = name.trim().split(' ');
-  if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-  return name.substring(0, 2).toUpperCase();
-}
-
-function formatBRL(value: number) {
-  if (value >= 1_000_000)
-    return `R$ ${(value / 1_000_000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
-  if (value >= 1_000)
-    return `R$ ${(value / 1_000).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}k`;
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
-}
-
-function sortedByMetric(
-  ranking: RankingItem[],
-  docsFiltrados: any[],
-  vendedorMetricas: Record<string, VendedorMetricas>,
-  sortKey: keyof VendedorMetricas,
-): RankingItem[] {
-  const sellersInfo = new Map<string, RankingItem>();
-  ranking.forEach((r) => sellersInfo.set(r.usuarioId, r));
-  docsFiltrados.forEach((doc) => {
-    const v = doc.vendedor;
-    if (!v?.id || sellersInfo.has(v.id)) return;
-    sellersInfo.set(v.id, {
-      usuarioId: v.id,
-      nome: v.nome ?? v.name ?? 'Vendedor',
-      email: '',
-      avatarUrl: v.avatarUrl ?? null,
-      equipeId: null,
-      equipeNome: null,
-      pontos: 0,
-      badges: 0,
-      metasBatidas: 0,
-      missoesCumpridas: 0,
-      posicao: 0,
-    });
-  });
-  return [...sellersInfo.values()]
-    .filter((s) => (vendedorMetricas[s.usuarioId]?.[sortKey] ?? 0) > 0)
-    .sort(
-      (a, b) =>
-        (vendedorMetricas[b.usuarioId]?.[sortKey] ?? 0) -
-        (vendedorMetricas[a.usuarioId]?.[sortKey] ?? 0),
-    )
-    .map((s, i) => ({ ...s, posicao: i + 1 }));
-}
+// ── Code splitting — carregados sob demanda ────────────────────────────────
+const RankingPodium = lazy(() =>
+  import('./RankingPodium').then((m) => ({ default: m.RankingPodium })),
+);
+const RankingRestList = lazy(() =>
+  import('./RankingRestList').then((m) => ({ default: m.RankingRestList })),
+);
+const MetasCampanhasPanel = lazy(() =>
+  import('./MetasCampanhasPanel').then((m) => ({ default: m.MetasCampanhasPanel })),
+);
+const RankingClassicView = lazy(() =>
+  import('./RankingClassicView').then((m) => ({ default: m.RankingClassicView })),
+);
+// ──────────────────────────────────────────────────────────────────────────
 
 export function RankingDisplay() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [periodo, setPeriodo] = useState<Periodo>('mes_atual');
   const [tipoDoc, setTipoDoc] = useState<TipoDoc>('todos');
-  const [bgImage, setBgImage] = useState<string | null>(() => {
-    try { return localStorage.getItem('ranking-bg'); } catch { return null; }
-  });
-  const rootRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeCategory, setActiveCategory] = useState<TipoRanking>('premio');
+  const [rotationKey, setRotationKey] = useState(0);
+  const [viewMode, setViewMode] = useState<'modern' | 'classic'>('modern');
+  const [showBackground, setShowBackground] = useState(true);
 
-  // Trava o scroll do <main> — ranking é dashboard full-viewport
+  const rootRef = useRef<HTMLDivElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+
+  const params = useMemo(() => getPeriodo(periodo), [periodo]);
+
+  const { rankingLoading, rankingsByMetric, vendedorMetricas, usuariosMap, metas, campanhas } =
+    useRankingData(params, tipoDoc);
+
+  useRankingSSE();
+
+  // Trava o scroll do <main> — ranking é viewport-fill
   useEffect(() => {
     let el = rootRef.current?.parentElement ?? null;
     while (el) {
@@ -134,136 +55,52 @@ export function RankingDisplay() {
     }
   }, []);
 
-  const params = useMemo(() => getPeriodo(periodo), [periodo]);
-
-  const { data: rankingData, isLoading: rankingLoading } = useRankingGamificacao(params);
-  const ranking = rankingData?.ranking ?? [];
-
-  useRankingSSE();
-
-  // Última venda — atualizada via SSE
-  const { data: ultimaVendaDocs } = useQuery({
-    queryKey: ['ranking-ultima-venda'],
-    queryFn: async () => {
-      const res = await api.get('/sales-documents', {
-        params: {
-          criadoApos: dayjs().subtract(30, 'day').format('YYYY-MM-DD'),
-          criadoAntes: dayjs().format('YYYY-MM-DD'),
-        },
+  // Auto-rotation — reinicia quando o usuário muda de categoria manualmente
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActiveCategory((prev) => {
+        const idx = CATEGORIES.indexOf(prev);
+        return CATEGORIES[(idx + 1) % CATEGORIES.length];
       });
-      return Array.isArray(res) ? res : ((res as any)?.data ?? []);
-    },
-    retry: false,
-    staleTime: 0,
-  });
+    }, ROTATION_INTERVAL);
+    return () => clearInterval(id);
+  }, [rotationKey]);
 
-  const ultimaVenda = useMemo(() => {
-    if (!ultimaVendaDocs?.length) return null;
-    return [...ultimaVendaDocs].sort(
-      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )[0] as any;
-  }, [ultimaVendaDocs]);
-
-  const { data: ultimaConquistaRaw } = useUltimaConquista();
-  const ultimaConquista = (ultimaConquistaRaw as any)?.data ?? ultimaConquistaRaw ?? null;
-
-  const { data: metasRaw } = useMetasAtivas();
-  const metas = useMemo(() => {
-    const lista = Array.isArray(metasRaw) ? metasRaw : ((metasRaw as any)?.data ?? []);
-    return lista;
-  }, [metasRaw]);
-
-  const { data: campanhasRaw } = useCampanhasAtivas();
-  const campanhas = useMemo(() => {
-    const lista = Array.isArray(campanhasRaw) ? campanhasRaw : ((campanhasRaw as any)?.data ?? []);
-    return lista;
-  }, [campanhasRaw]);
-
-  const { data: docsPeriodo = [] } = useQuery({
-    queryKey: ['ranking-docs-periodo', params],
-    queryFn: async () => {
-      const res = await api.get('/sales-documents', {
-        params: { criadoApos: params.dataInicio, criadoAntes: params.dataFim },
-      });
-      return Array.isArray(res) ? res : ((res as any)?.data ?? []);
-    },
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  });
-
-  const docsFiltrados = useMemo(() => {
-    if (tipoDoc === 'todos') return docsPeriodo as any[];
-    return (docsPeriodo as any[]).filter((doc) => {
-      const situacao = String(doc.situacaoCotacao ?? '').toUpperCase();
-      if (tipoDoc === 'renovacao') return situacao === 'RENOVACAO';
-      if (tipoDoc === 'novo') return situacao === 'NOVO';
-      return true;
-    });
-  }, [docsPeriodo, tipoDoc]);
-
-  const vendedorMetricas = useMemo<Record<string, VendedorMetricas>>(() => {
-    const map: Record<
-      string,
-      { totalPremio: number; quantidadeVendas: number; somaPercentualComissao: number; countComissao: number }
-    > = {};
-    docsFiltrados.forEach((doc) => {
-      const id = doc.vendedor?.id;
-      if (!id) return;
-      const premio = doc.premioLiquido ? parseFloat(String(doc.premioLiquido)) : 0;
-      const pct = doc.percentualComissao ? parseFloat(String(doc.percentualComissao)) : 0;
-      if (!map[id]) map[id] = { totalPremio: 0, quantidadeVendas: 0, somaPercentualComissao: 0, countComissao: 0 };
-      map[id].totalPremio += premio;
-      map[id].quantidadeVendas += 1;
-      if (pct > 0) {
-        map[id].somaPercentualComissao += pct;
-        map[id].countComissao += 1;
-      }
-    });
-    return Object.fromEntries(
-      Object.entries(map).map(([id, v]) => [
-        id,
-        {
-          totalPremio: v.totalPremio,
-          quantidadeVendas: v.quantidadeVendas,
-          ticketMedio: v.quantidadeVendas > 0 ? v.totalPremio / v.quantidadeVendas : 0,
-          mediaComissao: v.countComissao > 0 ? v.somaPercentualComissao / v.countComissao : 0,
-        },
-      ]),
-    );
-  }, [docsFiltrados]);
-
-  const rankingsByMetric = useMemo(() => {
-    const byPontos = [...ranking]
-      .sort((a, b) => b.pontos - a.pontos)
-      .map((s, i) => ({ ...s, posicao: i + 1 }));
-    return {
-      pontos: byPontos,
-      premio: sortedByMetric(ranking, docsFiltrados, vendedorMetricas, 'totalPremio'),
-      comissao: sortedByMetric(ranking, docsFiltrados, vendedorMetricas, 'mediaComissao'),
-      quantidade: sortedByMetric(ranking, docsFiltrados, vendedorMetricas, 'quantidadeVendas'),
-      ticketMedio: sortedByMetric(ranking, docsFiltrados, vendedorMetricas, 'ticketMedio'),
+  // Progress bar via rAF — sem re-renders
+  useEffect(() => {
+    const bar = progressBarRef.current;
+    if (!bar) return;
+    const start = Date.now();
+    let raf: number;
+    const tick = () => {
+      const pct = Math.max(0, 100 - ((Date.now() - start) / ROTATION_INTERVAL) * 100);
+      bar.style.width = `${pct}%`;
+      if (pct > 0) raf = requestAnimationFrame(tick);
     };
-  }, [ranking, vendedorMetricas, docsFiltrados]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [activeCategory]);
 
-  const { data: usuariosMap = {} } = useQuery<
-    Record<string, { avatarUrl: string | null; cargo: string | null }>
-  >({
-    queryKey: ['ranking-usuarios-info'],
-    queryFn: async () => {
-      const res = await api.get<any[]>('/users', { params: { select: true } });
-      const lista = Array.isArray(res) ? res : ((res as any)?.data ?? []);
-      return Object.fromEntries(
-        lista.map((u: any) => [u.id, { avatarUrl: u.avatarUrl ?? null, cargo: u.cargo?.nomeCargo ?? null }]),
-      );
-    },
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  });
+  const handleSelectCategory = useCallback((cat: TipoRanking) => {
+    setActiveCategory(cat);
+    setRotationKey((k) => k + 1);
+  }, []);
 
-  const vendedorId = ultimaVenda?.vendedor?.id;
-  const vendedorAvatarUrl = vendedorId ? (usuariosMap[vendedorId]?.avatarUrl ?? null) : null;
-  const conquistaUsuarioId = ultimaConquista?.usuario?.id;
-  const conquistaAvatarUrl = conquistaUsuarioId ? (usuariosMap[conquistaUsuarioId]?.avatarUrl ?? null) : null;
+  const handlePrev = useCallback(() => {
+    setActiveCategory((prev) => {
+      const idx = CATEGORIES.indexOf(prev);
+      return CATEGORIES[(idx - 1 + CATEGORIES.length) % CATEGORIES.length];
+    });
+    setRotationKey((k) => k + 1);
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setActiveCategory((prev) => {
+      const idx = CATEGORIES.indexOf(prev);
+      return CATEGORIES[(idx + 1) % CATEGORIES.length];
+    });
+    setRotationKey((k) => k + 1);
+  }, []);
 
   const toggleFullscreen = useCallback(() => {
     if (!isFullscreen) {
@@ -288,187 +125,121 @@ export function RankingDisplay() {
     };
   }, []);
 
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      setBgImage(result);
-      try { localStorage.setItem('ranking-bg', result); } catch { /* */ }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  }, []);
+  const activeCatStyle = CATEGORY_STYLE[activeCategory];
+  const activeRanking = rankingsByMetric[activeCategory];
+  const top3 = activeRanking.slice(0, 3);
+  const rest = activeRanking.slice(3);
 
-  const clearBg = useCallback(() => {
-    setBgImage(null);
-    try { localStorage.removeItem('ranking-bg'); } catch { /* */ }
-  }, []);
+  // mapa userId → posição em cada métrica
+  const userPositionsMap = useMemo(() => {
+    const map: Record<string, Partial<Record<TipoRanking, number>>> = {};
+    for (const [cat, items] of Object.entries(rankingsByMetric) as [TipoRanking, typeof activeRanking][]) {
+      for (const item of items) {
+        if (!map[item.usuarioId]) map[item.usuarioId] = {};
+        map[item.usuarioId][cat] = item.posicao;
+      }
+    }
+    return map;
+  }, [rankingsByMetric]);
 
   return (
     <div ref={rootRef} className="flex flex-col h-full overflow-hidden bg-[#0a0a0a]">
 
-      {/* ── BANNER ── slim: apenas fundo + chips compactos de atividade */}
-      <div className="relative shrink-0 h-[110px] overflow-hidden">
-        {bgImage ? (
-          <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
-        )}
-        {/* gradiente à esquerda para dar profundidade sem escurecer demais */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      {/* ── Filtros: período + tipo doc — oculto em fullscreen ── */}
+      {!isFullscreen && (
+        <RankingFilterBar
+          periodo={periodo}
+          onPeriodoChange={setPeriodo}
+          tipoDoc={tipoDoc}
+          onTipoDocChange={setTipoDoc}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
+          viewMode={viewMode}
+          onViewModeToggle={() => setViewMode((v) => (v === 'modern' ? 'classic' : 'modern'))}
+          showBackground={showBackground}
+          onToggleBackground={() => setShowBackground((v) => !v)}
+        />
+      )}
 
-        {/* Chips compactos de atividade — bottom-right do banner */}
-        <div className="absolute bottom-2.5 right-3 z-10 flex flex-row gap-2 items-end">
-          {ultimaConquista && (
-            <div className="flex items-center gap-2 pl-2.5 pr-3 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 shadow-lg max-w-[260px]">
-              <Trophy className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-              <Avatar className="h-6 w-6 shrink-0">
-                {conquistaAvatarUrl && <AvatarImage src={conquistaAvatarUrl} alt={ultimaConquista.usuario.nome} />}
-                <AvatarFallback className="text-[9px] font-bold bg-white/10 text-white/60">
-                  {initials(ultimaConquista.usuario.nome)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="text-white text-[11px] font-semibold truncate leading-tight">
-                  {ultimaConquista.usuario.nome}
-                </p>
-                <p className="text-amber-400/80 text-[10px] truncate leading-tight">
-                  {ultimaConquista.badgeTipo.nome}
-                </p>
-              </div>
-              <span className="text-white/30 text-[9px] shrink-0 ml-1">
-                {fromNow(ultimaConquista.createdAt)}
-              </span>
-            </div>
-          )}
-
-          {ultimaVenda && (
-            <div className="flex items-center gap-2 pl-2.5 pr-3 py-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 shadow-lg max-w-[280px]">
-              <Zap className="h-3.5 w-3.5 text-yellow-400 shrink-0" />
-              <Avatar className="h-6 w-6 shrink-0">
-                {vendedorAvatarUrl && <AvatarImage src={vendedorAvatarUrl} alt={ultimaVenda.vendedor?.nome} />}
-                <AvatarFallback className="text-[9px] font-bold bg-white/10 text-white/60">
-                  {initials(ultimaVenda.vendedor?.nome || 'V')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="text-white text-[11px] font-semibold truncate leading-tight">
-                  {ultimaVenda.vendedor?.nome}
-                </p>
-                {ultimaVenda.premioLiquido != null && (
-                  <p className="text-green-400 text-[10px] font-bold leading-tight">
-                    {formatBRL(parseFloat(String(ultimaVenda.premioLiquido)))}
-                  </p>
-                )}
-              </div>
-              <span className="text-white/30 text-[9px] shrink-0 ml-1">
-                {fromNow(ultimaVenda.createdAt)}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── BARRA DE FILTROS ── */}
-      <div className="flex items-center gap-3 px-4 py-1.5 border-b border-white/8 bg-[#0f0f0f] shrink-0 overflow-x-auto">
-        <div className="flex items-center gap-0.5 bg-white/5 rounded-lg p-0.5 shrink-0">
-          {(Object.keys(periodoLabels) as Periodo[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriodo(p)}
-              className={cn(
-                'text-[10px] px-2.5 py-1 rounded-md transition-colors font-medium whitespace-nowrap',
-                periodo === p ? 'bg-white/15 text-white' : 'text-white/35 hover:text-white/60',
-              )}
-            >
-              {periodoLabels[p]}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1 shrink-0">
-          {(Object.keys(tipoDocLabels) as TipoDoc[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTipoDoc(t)}
-              className={cn(
-                'text-[10px] px-2.5 py-0.5 rounded-full transition-colors font-medium whitespace-nowrap',
-                tipoDoc === t
-                  ? t === 'renovacao'
-                    ? 'bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/30'
-                    : t === 'novo'
-                    ? 'bg-green-500/20 text-green-300 ring-1 ring-green-500/30'
-                    : 'bg-white/12 text-white'
-                  : 'text-white/30 hover:text-white/55',
-              )}
-            >
-              {tipoDocLabels[t]}
-            </button>
-          ))}
-        </div>
-
-        <div className="ml-auto shrink-0">
-          <RankingControls
-            isFullscreen={isFullscreen}
-            hasBg={!!bgImage}
-            fileInputRef={fileInputRef}
-            onToggleFullscreen={toggleFullscreen}
-            onPickImage={() => fileInputRef.current?.click()}
-            onClearImage={clearBg}
-            onFileChange={handleFileChange}
+      {viewMode === 'classic' ? (
+        /* ── Modo clássico: 4 colunas simultâneas ── */
+        <Suspense fallback={<div className="flex-1" />}>
+          <RankingClassicView
+            rankingsByMetric={rankingsByMetric}
+            vendedorMetricas={vendedorMetricas}
+            usuariosMap={usuariosMap}
+            isLoading={rankingLoading}
+            showBackground={showBackground}
           />
-        </div>
-      </div>
+        </Suspense>
+      ) : (
+        /* ── Modo moderno: pódio com rotação ── */
+        <>
+          {/* Navegação de categoria + barra de progresso (embutida no nav) */}
+          <CategoryNav
+            activeCategory={activeCategory}
+            onSelect={handleSelectCategory}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            progressBarRef={progressBarRef}
+            progressBarColor={activeCatStyle.hex}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={toggleFullscreen}
+          />
 
-      {/* ── GRID 4 RANKINGS ── */}
-      {/* wrapper flex-1 min-h-0 → grid h-full garante height explícito para 1fr funcionar */}
-      <div className="flex-1 min-h-0">
-        <div className="h-full grid grid-cols-4 gap-px bg-white/5 overflow-hidden">
-          <div className="flex flex-col bg-[#0f0f0f] overflow-hidden">
-            <MiniLeaderboard
-              tipoRanking="premio"
-              ranking={rankingsByMetric.premio}
-              vendedorMetricas={vendedorMetricas}
-              usuariosMap={usuariosMap}
-              isLoading={rankingLoading}
-            />
-          </div>
-          <div className="flex flex-col bg-[#0f0f0f] overflow-hidden">
-            <MiniLeaderboard
-              tipoRanking="comissao"
-              ranking={rankingsByMetric.comissao}
-              vendedorMetricas={vendedorMetricas}
-              usuariosMap={usuariosMap}
-              isLoading={rankingLoading}
-            />
-          </div>
-          <div className="flex flex-col bg-[#0f0f0f] overflow-hidden">
-            <MiniLeaderboard
-              tipoRanking="quantidade"
-              ranking={rankingsByMetric.quantidade}
-              vendedorMetricas={vendedorMetricas}
-              usuariosMap={usuariosMap}
-              isLoading={rankingLoading}
-            />
-          </div>
-          <div className="flex flex-col bg-[#0f0f0f] overflow-hidden">
-            <MiniLeaderboard
-              tipoRanking="ticketMedio"
-              ranking={rankingsByMetric.ticketMedio}
-              vendedorMetricas={vendedorMetricas}
-              usuariosMap={usuariosMap}
-              isLoading={rankingLoading}
-            />
-          </div>
-        </div>
-      </div>
+          {/* Conteúdo principal */}
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
 
-      {/* ── METAS & CAMPANHAS ── */}
+            {/* Pódio — ocupa toda a altura disponível fora do fullscreen */}
+            <div className="flex-1 min-h-0">
+              <Suspense fallback={<PodiumSkeleton />}>
+                <RankingPodium
+                  tipoRanking={activeCategory}
+                  top3={top3}
+                  vendedorMetricas={vendedorMetricas}
+                  usuariosMap={usuariosMap}
+                  userPositionsMap={userPositionsMap}
+                  isLoading={rankingLoading}
+                />
+              </Suspense>
+            </div>
+
+            {/* Lista 4+ — apenas em tela cheia (TV) */}
+            {isFullscreen && (
+              <Suspense fallback={null}>
+                <RankingRestList
+                  items={rest}
+                  activeCategory={activeCategory}
+                  vendedorMetricas={vendedorMetricas}
+                  usuariosMap={usuariosMap}
+                />
+              </Suspense>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ── Metas & campanhas ── */}
       <div className="shrink-0 h-14 border-t border-white/8 bg-[#111] overflow-hidden">
-        <MetasCampanhasPanel metas={metas} campanhas={campanhas} />
+        <Suspense fallback={<div className="h-full" />}>
+          <MetasCampanhasPanel metas={metas} campanhas={campanhas} />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
+function PodiumSkeleton() {
+  return (
+    <div className={cn('flex flex-col h-full items-center justify-end pb-5 px-4')}>
+      <div className="flex items-end gap-4 w-full max-w-2xl">
+        {[1.0, 1.3, 1.0].map((scale, i) => (
+          <div
+            key={i}
+            className="flex-1 rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse"
+            style={{ height: `${Math.round(160 * scale)}px` }}
+          />
+        ))}
       </div>
     </div>
   );
