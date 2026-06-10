@@ -7,12 +7,21 @@ import { type RankingItem } from '@/modules/gamificacao/http';
 
 type Periodo = 'mes_atual' | 'mes_anterior' | 'trimestre' | 'ano';
 export type TipoDoc = 'todos' | 'novo' | 'renovacao';
+export type TipoRanking = 'pontos' | 'premio' | 'comissao' | 'quantidade' | 'ticketMedio';
 
 const periodoLabels: Record<Periodo, string> = {
   mes_atual: 'Mês atual',
   mes_anterior: 'Mês ant.',
   trimestre: '3 meses',
   ano: 'Ano',
+};
+
+const tipoRankingLabels: Record<TipoRanking, string> = {
+  pontos: 'Pontos',
+  premio: 'Prêmio Líquido',
+  comissao: 'Comissão Média',
+  quantidade: 'Qtd. Vendas',
+  ticketMedio: 'Ticket Médio',
 };
 
 const tipoDocLabels: Record<TipoDoc, string> = {
@@ -40,6 +49,8 @@ interface LeaderboardTableProps {
   onPeriodoChange: (p: Periodo) => void;
   tipoDoc: TipoDoc;
   onTipoDocChange: (t: TipoDoc) => void;
+  tipoRanking: TipoRanking;
+  onTipoRankingChange: (t: TipoRanking) => void;
   vendedorMetricas: Record<string, VendedorMetricas>;
   usuariosMap?: Record<string, { avatarUrl: string | null; cargo: string | null }>;
   renovacaoData?: RenovacaoData;
@@ -95,11 +106,13 @@ export function LeaderboardTable({
   onPeriodoChange,
   tipoDoc,
   onTipoDocChange,
+  tipoRanking,
+  onTipoRankingChange,
   vendedorMetricas,
   usuariosMap = {},
   renovacaoData,
 }: LeaderboardTableProps) {
-  const isRenovacao = tipoDoc === 'renovacao';
+  const isRenovacao = tipoDoc === 'renovacao' && tipoRanking === 'pontos';
 
   // Ordem aleatória estável — embaralha quando muda de aba ou carrega novos dados
   const rankingRenovacao = useMemo(() => {
@@ -134,6 +147,30 @@ export function LeaderboardTable({
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Sub-header — tipo ranking */}
+      <div className="flex items-center gap-1 px-3 sm:px-5 py-1.5 border-b border-white/8 shrink-0 overflow-x-auto">
+        {(Object.keys(tipoRankingLabels) as TipoRanking[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => onTipoRankingChange(t)}
+            className={cn(
+              'text-[10px] px-2.5 py-0.5 rounded-full transition-colors font-medium whitespace-nowrap',
+              tipoRanking === t
+                ? t === 'premio'
+                  ? 'bg-green-500/20 text-green-300 ring-1 ring-green-500/30'
+                  : t === 'comissao'
+                  ? 'bg-purple-500/20 text-purple-300 ring-1 ring-purple-500/30'
+                  : t === 'quantidade'
+                  ? 'bg-orange-500/20 text-orange-300 ring-1 ring-orange-500/30'
+                  : 'bg-white/12 text-white'
+                : 'text-white/30 hover:text-white/55',
+            )}
+          >
+            {tipoRankingLabels[t]}
+          </button>
+        ))}
       </div>
 
       {/* Sub-header — tipo (Todos / Novo / Renovação) */}
@@ -171,10 +208,21 @@ export function LeaderboardTable({
         <div className={cn('grid items-center gap-x-3 px-3 sm:px-5 py-2 border-b border-white/5 shrink-0', GRID)}>
           <span />
           <span className="text-[9px] uppercase tracking-widest text-white/25 font-semibold">Vendedor</span>
-          <span className="text-[9px] uppercase tracking-widest text-white/25 font-semibold text-right">Pontos</span>
-          <span className="hidden sm:block text-[9px] uppercase tracking-widest text-white/25 font-semibold text-right">Prêmio</span>
+          <span className={cn(
+            'text-[9px] uppercase tracking-widest font-semibold text-right',
+            tipoRanking === 'pontos' ? 'text-white/50' : tipoRanking === 'premio' ? 'text-green-400/70' : tipoRanking === 'comissao' ? 'text-purple-400/70' : tipoRanking === 'ticketMedio' ? 'text-cyan-400/70' : 'text-orange-400/70',
+          )}>
+            {tipoRanking === 'pontos' ? 'Pontos' : tipoRanking === 'premio' ? 'Prêmio' : tipoRanking === 'comissao' ? 'Comis.' : tipoRanking === 'ticketMedio' ? 'Ticket' : 'Vendas'}
+          </span>
+          <span className={cn(
+            'hidden sm:block text-[9px] uppercase tracking-widest font-semibold text-right',
+            tipoRanking === 'premio' ? 'text-green-400/70' : 'text-white/25',
+          )}>Prêmio</span>
           <span className="hidden sm:block text-[9px] uppercase tracking-widest text-white/25 font-semibold text-right">Ticket</span>
-          <span className="hidden sm:block text-[9px] uppercase tracking-widest text-white/25 font-semibold text-right">Comis.</span>
+          <span className={cn(
+            'hidden sm:block text-[9px] uppercase tracking-widest font-semibold text-right',
+            tipoRanking === 'comissao' ? 'text-purple-400/70' : 'text-white/25',
+          )}>Comis.</span>
         </div>
       )}
 
@@ -220,6 +268,7 @@ export function LeaderboardTable({
                 item={item}
                 metricas={vendedorMetricas[item.usuarioId] ?? null}
                 avatarUrl={usuariosMap[item.usuarioId]?.avatarUrl ?? item.avatarUrl}
+                tipoRanking={tipoRanking}
               />
             ))}
           </div>
@@ -305,10 +354,12 @@ function LeaderboardRow({
   item,
   metricas,
   avatarUrl,
+  tipoRanking,
 }: {
   item: RankingItem;
   metricas: VendedorMetricas | null;
   avatarUrl?: string | null;
+  tipoRanking: TipoRanking;
 }) {
   const isTop3 = item.posicao <= 3;
 
@@ -347,12 +398,58 @@ function LeaderboardRow({
         </div>
       </div>
 
-      {/* Pontos */}
+      {/* Métrica primária */}
       <div className="text-right">
-        <span className={cn('text-sm font-bold tabular-nums', item.posicao === 1 ? 'text-yellow-400' : 'text-white')}>
-          {item.pontos}
-        </span>
-        <span className="text-white/25 text-[9px] ml-0.5">pts</span>
+        {tipoRanking === 'pontos' && (
+          <>
+            <span className={cn('text-sm font-bold tabular-nums', item.posicao === 1 ? 'text-yellow-400' : 'text-white')}>
+              {item.pontos}
+            </span>
+            <span className="text-white/25 text-[9px] ml-0.5">pts</span>
+          </>
+        )}
+        {tipoRanking === 'premio' && (
+          metricas && metricas.totalPremio > 0 ? (
+            <span className="text-green-400 text-sm font-bold tabular-nums">
+              {brlCompact(metricas.totalPremio)}
+            </span>
+          ) : (
+            <span className="text-white/15 text-xs">—</span>
+          )
+        )}
+        {tipoRanking === 'comissao' && (
+          metricas && metricas.mediaComissao > 0 ? (
+            <>
+              <span className="text-purple-400 text-sm font-bold tabular-nums">
+                {metricas.mediaComissao.toFixed(1)}
+              </span>
+              <span className="text-white/25 text-[9px] ml-0.5">%</span>
+            </>
+          ) : (
+            <span className="text-white/15 text-xs">—</span>
+          )
+        )}
+        {tipoRanking === 'quantidade' && (
+          metricas && metricas.quantidadeVendas > 0 ? (
+            <>
+              <span className="text-orange-400 text-sm font-bold tabular-nums">
+                {metricas.quantidadeVendas}
+              </span>
+              <span className="text-white/25 text-[9px] ml-0.5">vnd</span>
+            </>
+          ) : (
+            <span className="text-white/15 text-xs">—</span>
+          )
+        )}
+        {tipoRanking === 'ticketMedio' && (
+          metricas && metricas.ticketMedio > 0 ? (
+            <span className="text-cyan-400 text-sm font-bold tabular-nums">
+              {brlCompact(metricas.ticketMedio)}
+            </span>
+          ) : (
+            <span className="text-white/15 text-xs">—</span>
+          )
+        )}
       </div>
 
       {/* Prêmio */}
