@@ -1,7 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/core/ui/button';
-import { Sentry } from '@/infra/sentry';
 
 interface Props {
   children: ReactNode;
@@ -19,7 +18,11 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
+    // Import dinâmico: o Sentry está em chunk assíncrono (fora do entry). Quando um
+    // erro ocorre, o chunk já foi carregado no boot, então isto resolve na hora.
+    void import('@/infra/sentry').then(({ Sentry }) =>
+      Sentry.captureException(error, { extra: { componentStack: info.componentStack } }),
+    );
     console.error('[AppErrorBoundary]', error, info.componentStack);
   }
 
