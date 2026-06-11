@@ -228,7 +228,6 @@ export const CrossSellingFilters = memo(function CrossSellingFilters({
             mode="range"
             selected={filters.vigenciaInicioRange}
             onSelect={(range) => {
-              console.log('[xsell] onSelect vigenciaInicio', range);
               onChangeFilters({ vigenciaInicioRange: range });
             }}
           />
@@ -265,7 +264,6 @@ export const CrossSellingFilters = memo(function CrossSellingFilters({
             mode="range"
             selected={filters.vigenciaFimRange}
             onSelect={(range) => {
-              console.log('[xsell] onSelect vigenciaFim', range);
               onChangeFilters({ vigenciaFimRange: range });
             }}
           />
@@ -302,7 +300,6 @@ export const CrossSellingFilters = memo(function CrossSellingFilters({
             mode="range"
             selected={filters.dataAprovacaoRange}
             onSelect={(range) => {
-              console.log('[xsell] onSelect dataAprovacao', range);
               onChangeFilters({ dataAprovacaoRange: range });
             }}
           />

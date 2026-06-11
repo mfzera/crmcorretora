@@ -108,12 +108,15 @@ const listQueryDoc = z.object({
   tipoDocumento: z
     .enum(['COTACAO_DIRETA', 'PROPOSTA_FORMAL', 'VENDA_EXPRESSA'])
     .optional(),
+  seguradoraParceiraId: z.string().uuid().optional(),
   vigenciaFimAte: z.string().optional(),
   vigenciaFimDe: z.string().optional(),
   vigenciaInicioAte: z.string().optional(),
   vigenciaInicioDe: z.string().optional(),
   criadoApos: z.string().optional(),
   criadoAntes: z.string().optional(),
+  dataAprovacaoDe: z.string().optional(),
+  dataAprovacaoAte: z.string().optional(),
 });
 
 export const documentosVendaDocs = {

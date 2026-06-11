@@ -98,7 +98,6 @@ function CrossSellingContent() {
     limit: LIMIT,
   }), [filters, page]);
 
-  console.log('[xsell] queryFilters', queryFilters);
   const { data, isLoading } = useSegurosAtivos(queryFilters);
   const documentos = data?.data ?? [];
   const meta = data?.meta;
