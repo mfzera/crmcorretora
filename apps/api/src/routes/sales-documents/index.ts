@@ -590,16 +590,20 @@ const documentosVendaRoutes: FastifyPluginAsyncZod = async function (fastify) {
 
       if (query.dataAprovacaoDe) {
         conditions.push(
-          gte(documentosVenda.dataAprovacaoCadastro, new Date(query.dataAprovacaoDe)),
+          gte(
+            documentosVenda.dataAprovacaoCadastro,
+            new Date(query.dataAprovacaoDe + 'T00:00:00-03:00'),
+          ),
         );
       }
 
       if (query.dataAprovacaoAte) {
-        // Inclui o dia inteiro do limite superior
-        const ate = new Date(query.dataAprovacaoAte);
-        ate.setDate(ate.getDate() + 1);
+        // Inclui o dia inteiro do limite superior, em horário de São Paulo (UTC-3)
         conditions.push(
-          lte(documentosVenda.dataAprovacaoCadastro, ate),
+          lte(
+            documentosVenda.dataAprovacaoCadastro,
+            new Date(query.dataAprovacaoAte + 'T23:59:59.999-03:00'),
+          ),
         );
       }
 

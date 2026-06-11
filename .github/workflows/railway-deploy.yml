@@ -61,7 +61,20 @@ jobs:
     steps:
       - name: Trigger Railway Deploy
         run: |
-          curl -f -X POST \
+          set -euo pipefail
+
+          # Falha cedo se algum secret estiver vazio — senão o curl "passa" e o deploy nunca acontece.
+          if [ -z "${{ secrets.RAILWAY_TOKEN }}" ] || \
+             [ -z "${{ secrets.RAILWAY_PROJECT_ID }}" ] || \
+             [ -z "${{ secrets.RAILWAY_ENVIRONMENT_ID }}" ] || \
+             [ -z "${{ secrets.RAILWAY_SERVICE_ID }}" ]; then
+            echo "::error::Secrets do Railway ausentes (TOKEN/PROJECT_ID/ENVIRONMENT_ID/SERVICE_ID). Deploy NÃO disparado."
+            exit 1
+          fi
+
+          # -f não basta: o GraphQL do Railway retorna HTTP 200 mesmo em erro,
+          # com o erro dentro do campo "errors". Capturamos o corpo e validamos.
+          response=$(curl -sS -X POST \
             https://backboard.railway.app/graphql/v2 \
             -H "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
             -H "Content-Type: application/json" \
@@ -72,4 +85,18 @@ jobs:
                 "environmentId": "${{ secrets.RAILWAY_ENVIRONMENT_ID }}",
                 "serviceId": "${{ secrets.RAILWAY_SERVICE_ID }}"
               }
-            }'
+            }')
+
+          echo "Resposta do Railway: $response"
+
+          if echo "$response" | grep -q '"errors"'; then
+            echo "::error::Railway retornou erros no GraphQL — deploy NÃO foi disparado de verdade."
+            exit 1
+          fi
+
+          if ! echo "$response" | grep -q '"environmentTriggersDeploy"'; then
+            echo "::error::Resposta inesperada do Railway — deploy não confirmado."
+            exit 1
+          fi
+
+          echo "Deploy do Railway disparado com sucesso."
