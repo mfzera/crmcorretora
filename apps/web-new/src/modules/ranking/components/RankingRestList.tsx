@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/core/ui/avatar';
 import { cn } from '@/core/utils';
 import { type RankingItem } from '@/modules/gamificacao/http';
@@ -18,7 +19,7 @@ interface RankingRestListProps {
   isFullscreen?: boolean;
 }
 
-export function RankingRestList({
+export const RankingRestList = memo(function RankingRestList({
   items,
   activeCategory,
   vendedorMetricas,
@@ -86,4 +87,4 @@ export function RankingRestList({
       </div>
     </div>
   );
-}
+});

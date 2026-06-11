@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Crown, Medal } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/core/ui/avatar';
 import { Skeleton } from '@/core/ui/skeleton';
@@ -271,7 +272,7 @@ interface RankingPodiumProps {
   isLoading: boolean;
 }
 
-export function RankingPodium({ tipoRanking, top3, vendedorMetricas, usuariosMap, userPositionsMap, isLoading }: RankingPodiumProps) {
+export const RankingPodium = memo(function RankingPodium({ tipoRanking, top3, vendedorMetricas, usuariosMap, userPositionsMap, isLoading }: RankingPodiumProps) {
   const [first, second, third] = top3;
 
   const avatarUrl = (item: RankingItem | undefined) =>
@@ -288,4 +289,4 @@ export function RankingPodium({ tipoRanking, top3, vendedorMetricas, usuariosMap
       </div>
     </div>
   );
-}
+});

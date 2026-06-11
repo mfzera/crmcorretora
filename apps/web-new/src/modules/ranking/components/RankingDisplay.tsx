@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { lazy, Suspense, useState, useMemo, useEffect, useRef, useCallback, useTransition } from 'react';
 import { cn } from '@/core/utils';
 import { CATEGORY_STYLE } from './RankingPodium';
 import { type TipoDoc, type TipoRanking } from './LeaderboardTable';
@@ -89,26 +89,34 @@ export function RankingDisplay() {
     return () => cancelAnimationFrame(raf);
   }, [activeCategory]);
 
+  const [, startTransition] = useTransition();
+
   const handleSelectCategory = useCallback((cat: TipoRanking) => {
-    setActiveCategory(cat);
-    setRotationKey((k) => k + 1);
-  }, []);
+    startTransition(() => {
+      setActiveCategory(cat);
+      setRotationKey((k) => k + 1);
+    });
+  }, [startTransition]);
 
   const handlePrev = useCallback(() => {
-    setActiveCategory((prev) => {
-      const idx = CATEGORIES.indexOf(prev);
-      return CATEGORIES[(idx - 1 + CATEGORIES.length) % CATEGORIES.length];
+    startTransition(() => {
+      setActiveCategory((prev) => {
+        const idx = CATEGORIES.indexOf(prev);
+        return CATEGORIES[(idx - 1 + CATEGORIES.length) % CATEGORIES.length];
+      });
+      setRotationKey((k) => k + 1);
     });
-    setRotationKey((k) => k + 1);
-  }, []);
+  }, [startTransition]);
 
   const handleNext = useCallback(() => {
-    setActiveCategory((prev) => {
-      const idx = CATEGORIES.indexOf(prev);
-      return CATEGORIES[(idx + 1) % CATEGORIES.length];
+    startTransition(() => {
+      setActiveCategory((prev) => {
+        const idx = CATEGORIES.indexOf(prev);
+        return CATEGORIES[(idx + 1) % CATEGORIES.length];
+      });
+      setRotationKey((k) => k + 1);
     });
-    setRotationKey((k) => k + 1);
-  }, []);
+  }, [startTransition]);
 
   const toggleFullscreen = useCallback(() => {
     if (!isFullscreen) {
