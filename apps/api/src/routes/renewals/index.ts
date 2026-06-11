@@ -2822,6 +2822,12 @@ const renovacoesRoutes: FastifyPluginAsyncZod = async function (fastify) {
         transferirRenovacoesSchema.parse(request.body);
       const vendedorAtualId = request.user.sub;
 
+      // Gestores com metricas:acessar (ou admin) podem transferir renovações de
+      // qualquer vendedor da corretora — mesmo predicado da listagem (GET /).
+      const podeVerTodos =
+        request.user.isAdmin ||
+        request.user.permissoes?.includes('metricas:acessar');
+
       // Validação 1: Não pode transferir para si mesmo
       if (novoVendedorId === vendedorAtualId) {
         throw new ValidationError('Não é possível transferir para si mesmo');
@@ -2859,12 +2865,15 @@ const renovacoesRoutes: FastifyPluginAsyncZod = async function (fastify) {
         throw new NotFoundError('Vendedor destinatário não encontrado');
       }
 
-      // Validação 3: Buscar renovações do vendedor atual
+      // Validação 3: Buscar renovações a transferir.
+      // Vendedor comum: só as próprias. Gestor/admin: qualquer uma da corretora.
       const renovacoes = await db.query.renovacoesComerciais.findMany({
         where: and(
           inArray(renovacoesComerciais.id, renovacaoIds),
           eq(renovacoesComerciais.corretoraId, request.corretoraId),
-          eq(renovacoesComerciais.vendedorId, vendedorAtualId),
+          ...(podeVerTodos
+            ? []
+            : [eq(renovacoesComerciais.vendedorId, vendedorAtualId)]),
         ),
         with: {
           cliente: { columns: { nome: true } },
@@ -2876,7 +2885,18 @@ const renovacoesRoutes: FastifyPluginAsyncZod = async function (fastify) {
       }
 
       if (renovacoes.length !== renovacaoIds.length) {
-        throw new ValidationError('Algumas renovações não pertencem a você');
+        throw new ValidationError(
+          podeVerTodos
+            ? 'Algumas renovações não foram encontradas nesta corretora'
+            : 'Algumas renovações não pertencem a você',
+        );
+      }
+
+      // Não permitir transferência no-op (renovação que já pertence ao destinatário)
+      if (renovacoes.some((r) => r.vendedorId === novoVendedorId)) {
+        throw new ValidationError(
+          'Uma ou mais renovações já pertencem ao vendedor destinatário',
+        );
       }
 
       // Validação 4: Verificar status (não permitir finalizadas)
@@ -3043,6 +3063,25 @@ const renovacoesRoutes: FastifyPluginAsyncZod = async function (fastify) {
         (item: any) => item.renovacaoId,
       );
 
+      // Buscar o dono atual de cada renovação ANTES de atualizar — esse é o
+      // dono original verdadeiro. Pode diferir do solicitante quando a
+      // transferência foi iniciada por um gestor em nome de outro vendedor.
+      const renovacoesAtuais = await db.query.renovacoesComerciais.findMany({
+        where: and(
+          inArray(renovacoesComerciais.id, renovacaoIds),
+          eq(renovacoesComerciais.corretoraId, request.corretoraId),
+        ),
+        columns: { id: true, vendedorId: true },
+      });
+
+      // Agrupar renovações por dono original
+      const idsPorDonoOriginal = new Map<string, string[]>();
+      for (const r of renovacoesAtuais) {
+        const arr = idsPorDonoOriginal.get(r.vendedorId) ?? [];
+        arr.push(r.id);
+        idsPorDonoOriginal.set(r.vendedorId, arr);
+      }
+
       // Efetivar transferência
       await db.transaction(async (tx) => {
         // Atualizar status da transferência
@@ -3056,36 +3095,37 @@ const renovacoesRoutes: FastifyPluginAsyncZod = async function (fastify) {
           })
           .where(eq(transferenciaRenovacoes.id, id));
 
-        // Transferir renovações
-        await tx
-          .update(renovacoesComerciais)
-          .set({
-            vendedorId: request.user.sub,
-            vendedorOriginalId: transferencia.solicitanteId,
-            transferidaPorId: transferencia.solicitanteId,
-            transferidaEm: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(inArray(renovacoesComerciais.id, renovacaoIds));
+        for (const [donoOriginalId, ids] of idsPorDonoOriginal) {
+          // Transferir renovações deste dono original
+          await tx
+            .update(renovacoesComerciais)
+            .set({
+              vendedorId: request.user.sub,
+              vendedorOriginalId: donoOriginalId,
+              transferidaPorId: transferencia.solicitanteId,
+              transferidaEm: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(inArray(renovacoesComerciais.id, ids));
 
-        // Sincronizar cotações EM_ELABORACAO vinculadas às renovações transferidas.
-        // Só trocar vendedor quando ele ainda é o solicitante original — se houver
-        // split comercial (vendedor != solicitante), preservar o split.
-        // atuanteId NUNCA é sobrescrito: quem está operando continua operando.
-        await tx
-          .update(cotacoes)
-          .set({
-            vendedorId: request.user.sub,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(cotacoes.corretoraId, request.corretoraId),
-              eq(cotacoes.status, 'EM_ELABORACAO'),
-              eq(cotacoes.vendedorId, transferencia.solicitanteId),
-              sql`${cotacoes.detalhesRisco}->>'renovacaoId' IN (${sql.join(renovacaoIds.map((rid: string) => sql`${rid}`), sql`, `)})`,
-            ),
-          );
+          // Sincronizar cotações EM_ELABORACAO do dono original vinculadas a
+          // estas renovações. Cotações de outro vendedor (split comercial) são
+          // preservadas. atuanteId NUNCA é sobrescrito: quem opera continua operando.
+          await tx
+            .update(cotacoes)
+            .set({
+              vendedorId: request.user.sub,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(cotacoes.corretoraId, request.corretoraId),
+                eq(cotacoes.status, 'EM_ELABORACAO'),
+                eq(cotacoes.vendedorId, donoOriginalId),
+                sql`${cotacoes.detalhesRisco}->>'renovacaoId' IN (${sql.join(ids.map((rid: string) => sql`${rid}`), sql`, `)})`,
+              ),
+            );
+        }
       });
 
       return ok({

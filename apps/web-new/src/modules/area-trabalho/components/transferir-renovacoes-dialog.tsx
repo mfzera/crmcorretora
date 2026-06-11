@@ -85,8 +85,8 @@ export function TransferirRenovacoesDialog({
           <DialogTitle>Transferir Renovações</DialogTitle>
           <DialogDescription>
             Selecione o vendedor que receberá {renovacaoIds.length} renovação
-            {renovacaoIds.length !== 1 ? 'ões' : ''}. Você será adicionado como
-            vendedor secundário.
+            {renovacaoIds.length !== 1 ? 'ões' : ''}. O vendedor atual será
+            registrado como vendedor original.
           </DialogDescription>
         </DialogHeader>
 
