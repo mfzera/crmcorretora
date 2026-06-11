@@ -53,12 +53,18 @@ export function useWorkspaceData({
   const { data: renovacoesPendentes = [] } = useRenovacoesPendentes();
   const { data: renovacoesVencidas = [] } = useRenovacoesVencidas();
   const { data: cotacaoTags = [] } = useCotacaoTags();
-  const { data: usuariosVendedores = [] } = useUsuariosVendedores();
-  const { data: produtosRaw } = useProdutos({ ativo: true }, 1, 200);
-  const { data: seguradorasRaw } = useSeguradorasParceiras({
-    status: 'ATIVA',
-    limit: 200,
-  });
+
+  // Opções de editor/filtro (vendedores, produtos, seguradoras) não são necessárias para
+  // o primeiro paint — só quando o usuário abre um editor de célula. Adiamos até a planilha
+  // de renovações (dado crítico) chegar, tirando-as do fan-out inicial de requests sem risco
+  // de editor vazio (carregam bem antes de o usuário interagir).
+  const optionsEnabled = !loadingRenovacoes;
+  const { data: usuariosVendedores = [] } = useUsuariosVendedores({ enabled: optionsEnabled });
+  const { data: produtosRaw } = useProdutos({ ativo: true }, 1, 200, { enabled: optionsEnabled });
+  const { data: seguradorasRaw } = useSeguradorasParceiras(
+    { status: 'ATIVA', limit: 200 },
+    { enabled: optionsEnabled },
+  );
 
   const vendedoresOptions = useMemo<SelectOption[]>(
     () =>

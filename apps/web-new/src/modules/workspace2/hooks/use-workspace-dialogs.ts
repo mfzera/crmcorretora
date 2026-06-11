@@ -1,4 +1,4 @@
-import { useReducer } from 'react';
+import { useReducer, startTransition } from 'react';
 import type { RenovacaoPendente, RenovacaoPlanilha, Cotacao } from '@/types/area-trabalho';
 import type { WorkspaceRow } from '../types';
 import type { ReenviarCadastroRow } from '../components/reenviar-cadastro-dialog';
@@ -127,23 +127,27 @@ export function useWorkspaceDialogs() {
 
   return {
     ...state,
-    openDetalhes: (renovacao: RenovacaoPendente) => dispatch({ type: 'OPEN_DETALHES', renovacao }),
+    // As aberturas de dialogs lazy (carregados via React.lazy + Suspense) montam árvores
+    // pesadas (react-hook-form, ag-grid). Marcá-las como transição mantém o clique
+    // responsivo (INP) — o feedback pinta na hora e a montagem do dialog não bloqueia a
+    // thread. Os `close` e `set*Open` ficam síncronos (devem ser imediatos).
+    openDetalhes: (renovacao: RenovacaoPendente) => startTransition(() => dispatch({ type: 'OPEN_DETALHES', renovacao })),
     closeDetalhes: () => dispatch({ type: 'CLOSE_DETALHES' }),
-    openConvertida: (renovacao: RenovacaoPlanilha) => dispatch({ type: 'OPEN_CONVERTIDA', renovacao }),
+    openConvertida: (renovacao: RenovacaoPlanilha) => startTransition(() => dispatch({ type: 'OPEN_CONVERTIDA', renovacao })),
     closeConvertida: () => dispatch({ type: 'CLOSE_CONVERTIDA' }),
-    openCotacao: (cotacao: Cotacao, mode: 'view' | 'edit' = 'view') => dispatch({ type: 'OPEN_COTACAO', cotacao, mode }),
+    openCotacao: (cotacao: Cotacao, mode: 'view' | 'edit' = 'view') => startTransition(() => dispatch({ type: 'OPEN_COTACAO', cotacao, mode })),
     setCotacaoMode: (mode: 'view' | 'edit') => dispatch({ type: 'SET_COTACAO_MODE', mode }),
     closeCotacao: () => dispatch({ type: 'CLOSE_COTACAO' }),
-    openNovoSeguro: () => dispatch({ type: 'OPEN_NOVO_SEGURO' }),
+    openNovoSeguro: () => startTransition(() => dispatch({ type: 'OPEN_NOVO_SEGURO' })),
     setNovoSeguroOpen: (open: boolean) => dispatch({ type: 'SET_NOVO_SEGURO_OPEN', open }),
-    openProspectoRapido: () => dispatch({ type: 'OPEN_PROSPECTO_RAPIDO' }),
+    openProspectoRapido: () => startTransition(() => dispatch({ type: 'OPEN_PROSPECTO_RAPIDO' })),
     setProspectoRapidoOpen: (open: boolean) => dispatch({ type: 'SET_PROSPECTO_RAPIDO_OPEN', open }),
-    openEndosso: () => dispatch({ type: 'OPEN_ENDOSSO' }),
+    openEndosso: () => startTransition(() => dispatch({ type: 'OPEN_ENDOSSO' })),
     setEndossoOpen: (open: boolean) => dispatch({ type: 'SET_ENDOSSO_OPEN', open }),
-    openCancelar: (row: WorkspaceRow) => dispatch({ type: 'OPEN_CANCELAR', row }),
+    openCancelar: (row: WorkspaceRow) => startTransition(() => dispatch({ type: 'OPEN_CANCELAR', row })),
     closeCancelar: () => dispatch({ type: 'CLOSE_CANCELAR' }),
     setSubvendedoresOpen: (open: boolean) => dispatch({ type: 'SET_SUBVENDEDORES_OPEN', open }),
-    openTransferir: () => dispatch({ type: 'OPEN_TRANSFERIR' }),
+    openTransferir: () => startTransition(() => dispatch({ type: 'OPEN_TRANSFERIR' })),
     setTransferirOpen: (open: boolean) => dispatch({ type: 'SET_TRANSFERIR_OPEN', open }),
     openComentarios: (row: WorkspaceRow) => dispatch({ type: 'OPEN_COMENTARIOS', row }),
     closeComentarios: () => dispatch({ type: 'CLOSE_COMENTARIOS' }),

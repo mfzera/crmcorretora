@@ -1,15 +1,8 @@
-import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { getRouteApi } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { AgGridReact } from 'ag-grid-react';
-import {
-  themeQuartz,
-  type ColDef,
-  type ValueFormatterParams,
-  type GetRowIdParams,
-  type ICellEditorParams,
-} from 'ag-grid-community';
+import type { AgGridReact } from 'ag-grid-react';
 import { AArrowDown, AArrowUp, ArrowLeftRight, Building2, ChevronLeft, ChevronRight, Check, History, LayoutGrid, Package, Plus, EyeOff, Eye as EyeIcon, Printer, Search, Table2, Tag, Users, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/core/ui/popover';
 import { Button } from '@/core/ui/button';
@@ -34,28 +27,14 @@ import {
 } from '@/modules/area-trabalho/http';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/core/ui/sheet';
 import { ComentariosPanel } from '@/modules/area-trabalho/components/comentarios-panel';
-import { EquipeWorkspaceView, OportunidadesPendentesClienteCard } from '@/modules/area-trabalho/components';
+import { OportunidadesPendentesClienteCard } from '@/modules/area-trabalho/components/oportunidades-pendentes-cliente-card';
 import { useUpdateClient } from '@/modules/clientes/http';
 import { cn } from '@/core/utils';
 import { handleApiError, isApiError } from '@/core/utils/handle-api-error';
 import { useAuthStore } from '@/infra/auth/auth-store';
 import type { RenovacaoPendente } from '@/types/area-trabalho';
-import {
-  ClienteCellRenderer,
-  VendedorCellRenderer,
-  SituacaoCellRenderer,
-  ComentariosCellRenderer,
-  PLCellRenderer,
-  ComissaoCellRenderer,
-  ReceitaCellRenderer,
-  AcoesCellRenderer,
-} from '../components/cell-renderers';
-import { AnexosCellRenderer } from '../components/anexos-cell-renderer';
 import { SituacaoDropdown, MultiSelectFilter } from '../components/situacao-dropdown';
 import { ReenviarCadastroDialog } from '../components/reenviar-cadastro-dialog';
-import { WorkspaceKanban } from '../components/workspace-kanban';
-import { ProdutoCellEditor, VendedorCellEditor, SeguradoraCellEditor } from '../components/cell-editors';
-import { ActivityFeed } from '../components/activity-feed';
 import { useBrowserColorScheme } from '../hooks/use-browser-color-scheme';
 import { useWorkspaceNavigation } from '../hooks/use-workspace-navigation';
 import { useWorkspaceFilters } from '../hooks/use-workspace-filters';
@@ -64,7 +43,7 @@ import { useWorkspaceDialogs } from '../hooks/use-workspace-dialogs';
 import { useWorkspaceData } from '../hooks/use-workspace-data';
 import { useWorkspaceInlineEdit } from '../hooks/use-workspace-inline-edit';
 import { FONT_SIZES } from '../types';
-import { fmt, fmtDate, fmtPct, renovacaoPlanilhaParaPendente, situacaoToEtapa, situacaoToRenovacaoStatus, SITUACOES_RENOVACAO_EDITAVEIS, SITUACOES_BLOQUEADAS } from '../helpers';
+import { fmt, fmtDate, fmtPct, renovacaoPlanilhaParaPendente, situacaoToEtapa, situacaoToRenovacaoStatus, SITUACOES_RENOVACAO_EDITAVEIS } from '../helpers';
 import type { FontSizeKey, GridContext, SelectOption, SituacaoLabel, WorkspaceRow } from '../types';
 
 // ─── Lazy dialogs ─────────────────────────────────────────────────────────────
@@ -92,6 +71,26 @@ const TransferirRenovacoesDialog = lazy(() =>
 );
 const ProspectoRapidoDialog = lazy(() =>
   import('../components/prospecto-rapido-dialog').then((m) => ({ default: m.ProspectoRapidoDialog })),
+);
+
+// ─── Lazy views (abas/modos não-default — fora do chunk inicial da rota) ───────
+
+// Grid ag-Grid: o pesado vendor-aggrid (~1,1 MB) só baixa quando a grid renderiza,
+// fora do caminho de FCP. Carrega os cell editors/renderers + columnDefs + theme.
+const WorkspaceGrid = lazy(() =>
+  import('../components/workspace-grid').then((m) => ({ default: m.WorkspaceGrid })),
+);
+// Kanban: só renderiza quando viewMode === 'kanban' (puxa vendor-dnd).
+const WorkspaceKanban = lazy(() =>
+  import('../components/workspace-kanban').then((m) => ({ default: m.WorkspaceKanban })),
+);
+// ActivityFeed: só na aba "logs".
+const ActivityFeed = lazy(() =>
+  import('../components/activity-feed').then((m) => ({ default: m.ActivityFeed })),
+);
+// EquipeWorkspaceView: só na aba "equipe".
+const EquipeWorkspaceView = lazy(() =>
+  import('@/modules/area-trabalho/components/equipe-workspace-view').then((m) => ({ default: m.EquipeWorkspaceView })),
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -137,7 +136,11 @@ export function WorkspaceScreen() {
   const wsNavigate = wsRouteApi.useNavigate();
   const activeTab = wsSearch.tab ?? 'renovacoes';
   const setActiveTab = useCallback((tab: string) => {
-    wsNavigate({ search: (prev) => ({ ...prev, tab: tab as any }) });
+    // Trocar de aba monta a grid do outro tab (ag-grid pesado). Em transição: a aba
+    // destaca na hora (INP) e a montagem não bloqueia o clique.
+    startTransition(() => {
+      wsNavigate({ search: (prev) => ({ ...prev, tab: tab as any }) });
+    });
   }, [wsNavigate]);
   const [selectedRenIds, setSelectedRenIds] = useState<string[]>([]);
   const [localDeletedIds, setLocalDeletedIds] = useState<Set<string>>(new Set());
@@ -173,7 +176,8 @@ export function WorkspaceScreen() {
   );
   const handleViewModeChange = useCallback((mode: 'planilha' | 'kanban') => {
     try { localStorage.setItem('workspace:viewMode', mode); } catch { /* ignorar */ }
-    setViewMode(mode);
+    // Alternar planilha/kanban monta a view alvo (kanban puxa vendor-dnd). Transição mantém o INP baixo.
+    startTransition(() => setViewMode(mode));
   }, []);
 
   const browserColorScheme = useBrowserColorScheme();
@@ -669,252 +673,8 @@ export function WorkspaceScreen() {
     [handleVerDetalhes, handleEditarDetalhes, handleProspectar, handleDelete, handleRestore, handleOpenComentarios, handleAddComentario, vendedoresOptions, produtosOptions, seguradorasOptions, onDirectUpdate],
   );
 
-  const isCotacaoAtiva = (p: { data?: WorkspaceRow | null }) =>
-    p.data?._cotacao?.status === 'EM_ELABORACAO';
-
-  const isRenovacaoEditavel = (p: { data?: WorkspaceRow | null }) =>
-    p.data?.rowType === 'renovacao' && !SITUACOES_BLOQUEADAS.has(p.data?.situacao ?? '' as SituacaoLabel);
-
-  // ag-Grid não chama valueSetter para popup editors, mas sem ele dispara onCellValueChanged
-  // com newValue = undefined. Retornar false suprime esse comportamento indesejado.
-  const POPUP_EDITOR_VALUESET: ColDef['valueSetter'] = () => false;
-
-  const columnDefs: ColDef<WorkspaceRow>[] = useMemo(() => {
-    const cs = (colId: string, base?: Record<string, string>) => ((_p: unknown) => {
-      const bg = columnColorsRef.current[colId];
-      return bg ? { ...base, backgroundColor: bg } : (base ?? null);
-    });
-    return [
-    // Cliente — nunca editável
-    {
-      headerName: 'Cliente',
-      colId: 'col_cliente',
-      valueGetter: (p) => p.data?.clienteNome ?? '',
-      cellRenderer: ClienteCellRenderer,
-      cellStyle: cs('col_cliente'),
-      flex: 2,
-      minWidth: 150,
-      editable: false,
-    },
-    // Vigência Início — agDateStringCellEditor (YYYY-MM-DD)
-    {
-      field: 'vigenciaInicio',
-      headerName: 'Vig. Início',
-      valueFormatter: (p: ValueFormatterParams) => fmtDate(p.value),
-      editable: false,
-      cellStyle: cs('vigenciaInicio'),
-      width: 105,
-    },
-    // Vigência Fim
-    {
-      field: 'vigenciaFim',
-      headerName: 'Vig. Fim',
-      valueFormatter: (p: ValueFormatterParams) => fmtDate(p.value),
-      editable: false,
-      cellStyle: cs('vigenciaFim'),
-      width: 105,
-    },
-    // Produto — popup pesquisável; save vai via onDirectUpdate dentro do editor
-    {
-      colId: 'col_produto',
-      headerName: 'Produto',
-      valueGetter: (p) => p.data?.produto ?? '—',
-      valueSetter: POPUP_EDITOR_VALUESET,
-      editable: isCotacaoAtiva,
-      cellEditor: ProdutoCellEditor,
-      cellEditorPopup: true,
-      cellStyle: cs('col_produto'),
-      flex: 1,
-      minWidth: 110,
-    },
-    // Vendedor — popup pesquisável; save vai via onDirectUpdate dentro do editor
-    {
-      colId: 'col_vendedor',
-      headerName: 'Vendedor',
-      valueGetter: (p) => p.data?.vendedorNome ?? '—',
-      valueSetter: POPUP_EDITOR_VALUESET,
-      cellRenderer: VendedorCellRenderer,
-      editable: isCotacaoAtiva,
-      cellEditor: VendedorCellEditor,
-      cellEditorPopup: true,
-      cellStyle: cs('col_vendedor'),
-      flex: 1,
-      minWidth: 120,
-    },
-    // Seguradora — popup pesquisável; save vai via onDirectUpdate dentro do editor
-    {
-      colId: 'col_seguradora',
-      headerName: 'Seguradora',
-      valueGetter: (p) => p.data?.seguradora ?? '—',
-      valueSetter: POPUP_EDITOR_VALUESET,
-      editable: isCotacaoAtiva,
-      cellEditor: SeguradoraCellEditor,
-      cellEditorPopup: true,
-      cellStyle: cs('col_seguradora'),
-      flex: 1,
-      minWidth: 110,
-    },
-    // PL Atual — numérico, somente cotação
-    {
-      field: 'plAtual',
-      headerName: 'PL Atual',
-      valueFormatter: (p: ValueFormatterParams) => fmt(p.value),
-      cellRenderer: PLCellRenderer,
-      editable: isCotacaoAtiva,
-      cellEditor: 'agNumberCellEditor',
-      cellEditorParams: { min: 0, precision: 2 },
-      cellStyle: cs('plAtual'),
-      type: 'numericColumn',
-      width: 120,
-    },
-    // Comissão % — numérico, cotação + renovação editável
-    {
-      field: 'comissaoPct',
-      headerName: 'Comissão %',
-      valueFormatter: (p: ValueFormatterParams) => fmtPct(p.value),
-      cellRenderer: ComissaoCellRenderer,
-      editable: (p) => isCotacaoAtiva(p) || isRenovacaoEditavel(p),
-      cellEditor: 'agNumberCellEditor',
-      cellEditorParams: { min: 0, max: 100, precision: 2 },
-      cellStyle: cs('comissaoPct'),
-      type: 'numericColumn',
-      width: 100,
-    },
-    // Receita — calculada, não editável
-    {
-      colId: 'col_receita',
-      headerName: 'Receita',
-      valueGetter: (p) => p.data?.receita ?? null,
-      cellRenderer: ReceitaCellRenderer,
-      editable: false,
-      cellStyle: cs('col_receita'),
-      type: 'numericColumn',
-      width: 120,
-    },
-    // Situação — select dinâmico por tipo de linha
-    {
-      colId: 'col_situacao',
-      headerName: 'Situação',
-      valueGetter: (p) => p.data?.situacao ?? '',
-      valueSetter: (p) => {
-        if (!p.data) return false;
-        p.data.situacao = p.newValue as SituacaoLabel;
-        return true;
-      },
-      cellRenderer: SituacaoCellRenderer,
-      editable: (p) => {
-        if (!p.data) return false;
-        if (p.data.rowType === 'renovacao') return SITUACOES_RENOVACAO_EDITAVEIS.has(p.data.situacao);
-        return p.data._cotacao?.status === 'EM_ELABORACAO';
-      },
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: (p: ICellEditorParams<WorkspaceRow>) => ({
-        values: p.data?.rowType === 'renovacao'
-          ? (p.data?.situacao === 'Fechado' ? ['Iniciado', 'Cotação Enviada', 'Aguardando Retorno'] : ['Cotação Enviada', 'Aguardando Retorno', 'Fechado'])
-          : (p.data?.situacao === 'Fechado' ? ['Iniciado', 'Cotação Enviada', 'Aguardando Retorno'] : ['Iniciado', 'Cotação Enviada', 'Aguardando Retorno', 'Fechado']),
-      }),
-      cellStyle: cs('col_situacao'),
-      width: 170,
-    },
-    // Comentários
-    {
-      colId: 'col_comentarios',
-      headerName: 'Comentários',
-      cellRenderer: ComentariosCellRenderer,
-      valueGetter: (p) => p.data?.comentariosCount ?? 0,
-      sortable: false,
-      editable: false,
-      width: 260,
-      cellStyle: cs('col_comentarios', { padding: '0 8px' }),
-    },
-    // Anexos
-    {
-      colId: 'col_anexos',
-      headerName: '',
-      cellRenderer: AnexosCellRenderer,
-      sortable: false,
-      editable: false,
-      resizable: false,
-      width: 48,
-      cellStyle: cs('col_anexos', { padding: '0 8px' }),
-    },
-    // Ações
-    {
-      colId: 'col_acoes',
-      headerName: '',
-      cellRenderer: AcoesCellRenderer,
-      editable: false,
-      sortable: false,
-      resizable: false,
-      suppressMovable: true,
-      pinned: 'right' as const,
-      width: 110,
-      cellStyle: cs('col_acoes', { padding: '0 6px' }),
-    },
-    ]; }, []);
-
-  const defaultColDef: ColDef<WorkspaceRow> = useMemo(
-    () => ({ resizable: true, sortable: true }),
-    [],
-  );
-
-  const getRowId = useCallback((p: GetRowIdParams<WorkspaceRow>) => p.data.id, []);
-
   const fs = FONT_SIZES[fontSizeIdx];
 
-  const theme = useMemo(
-    () =>
-      themeQuartz.withParams({
-        spacing: 6,
-        rowHeight: fs.rowHeight,
-        headerHeight: fs.headerHeight,
-        fontSize: fs.size,
-        fontFamily: 'inherit',
-        borderRadius: 4,
-        wrapperBorderRadius: 6,
-        backgroundColor: 'var(--background)',
-        foregroundColor: 'var(--foreground)',
-        borderColor: 'var(--border)',
-        chromeBackgroundColor: 'var(--muted)',
-        headerBackgroundColor: 'var(--muted)',
-        headerTextColor: 'var(--muted-foreground)',
-        cellTextColor: 'var(--foreground)',
-        oddRowBackgroundColor: 'color-mix(in srgb, var(--muted) 40%, var(--background))',
-        rowHoverColor: 'color-mix(in srgb, var(--primary) 6%, transparent)',
-        columnBorder: { style: 'solid', width: 1, color: 'var(--border)' },
-        selectedRowBackgroundColor: 'color-mix(in srgb, var(--primary) 10%, transparent)',
-        menuBackgroundColor: 'var(--popover)',
-        menuTextColor: 'var(--popover-foreground)',
-        browserColorScheme,
-      }),
-    [fs, browserColorScheme],
-  );
-
-  const getRowStyle = useCallback((params: { data?: WorkspaceRow }) => {
-    if (params.data?.isDeleted) return { opacity: '0.45' as const };
-    if (params.data?.situacao === 'Perdido' || params.data?.situacao === 'Cancelado') return { opacity: '0.65' as const };
-    return undefined;
-  }, []);
-
-  const gridProps = {
-    columnDefs,
-    defaultColDef,
-    getRowId,
-    rowSelection: { mode: 'singleRow' as const, enableClickSelection: false },
-    animateRows: true,
-    singleClickEdit: true,
-    stopEditingWhenCellsLoseFocus: true,
-    onCellEditingStarted,
-    onCellValueChanged,
-    onCellContextMenu,
-    onColumnHeaderContextMenu,
-    onGridReady,
-    onColumnResized,
-    onDragStopped,
-    preventDefaultOnContextMenu: true,
-    theme,
-    getRowStyle,
-  } as const;
 
   const isGridTab = activeTab === 'renovacoes' || activeTab === 'novos-seguros';
 
@@ -1195,13 +955,15 @@ export function WorkspaceScreen() {
       {/* Aba Renovações */}
       <TabsContent value="renovacoes" className="flex-1 min-h-0 mt-0 overflow-hidden">
         {viewMode === 'kanban' ? (
-          <WorkspaceKanban
-            rows={rowsRen}
-            boardType="workspace-kanban-ren"
-            onSituacaoChange={onKanbanSituacaoChange}
-            onMoveBlocked={onKanbanMoveBlocked}
-            onVerDetalhes={handleVerDetalhes}
-          />
+          <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando kanban…</div>}>
+            <WorkspaceKanban
+              rows={rowsRen}
+              boardType="workspace-kanban-ren"
+              onSituacaoChange={onKanbanSituacaoChange}
+              onMoveBlocked={onKanbanMoveBlocked}
+              onVerDetalhes={handleVerDetalhes}
+            />
+          </Suspense>
         ) : loadingRenovacoes ? (
           <div className="p-4 space-y-2">
             {Array.from({ length: 15 }).map((_, i) => (
@@ -1233,14 +995,25 @@ export function WorkspaceScreen() {
               </div>
             )}
             <div className="flex-1 min-h-0 p-4">
-              <AgGridReact<WorkspaceRow>
-                {...gridProps}
-                rowSelection={{ mode: 'multiRow' as const, enableClickSelection: false, checkboxes: true, headerCheckbox: true }}
-                ref={gridRefRen}
-                rowData={displayRowsRen}
-                context={gridContext}
-                onSelectionChanged={onSelectionChangedRen}
-              />
+              <Suspense fallback={<div className="space-y-2">{Array.from({ length: 15 }).map((_, i) => (<Skeleton key={i} className="h-9 w-full rounded" />))}</div>}>
+                <WorkspaceGrid
+                  ref={gridRefRen}
+                  rowData={displayRowsRen}
+                  context={gridContext}
+                  columnColorsRef={columnColorsRef}
+                  fontSize={fs}
+                  browserColorScheme={browserColorScheme}
+                  rowSelection={{ mode: 'multiRow' as const, enableClickSelection: false, checkboxes: true, headerCheckbox: true }}
+                  onSelectionChanged={onSelectionChangedRen}
+                  onCellEditingStarted={onCellEditingStarted}
+                  onCellValueChanged={onCellValueChanged}
+                  onCellContextMenu={onCellContextMenu}
+                  onColumnHeaderContextMenu={onColumnHeaderContextMenu}
+                  onGridReady={onGridReady}
+                  onColumnResized={onColumnResized}
+                  onDragStopped={onDragStopped}
+                />
+              </Suspense>
             </div>
           </div>
         )}
@@ -1249,13 +1022,15 @@ export function WorkspaceScreen() {
       {/* Aba Novos Seguros */}
       <TabsContent value="novos-seguros" className="flex-1 min-h-0 mt-0 overflow-auto">
         {viewMode === 'kanban' ? (
-          <WorkspaceKanban
-            rows={rowsNS}
-            boardType="workspace-kanban-ns"
-            onSituacaoChange={onKanbanSituacaoChange}
-            onMoveBlocked={onKanbanMoveBlocked}
-            onVerDetalhes={handleVerDetalhes}
-          />
+          <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando kanban…</div>}>
+            <WorkspaceKanban
+              rows={rowsNS}
+              boardType="workspace-kanban-ns"
+              onSituacaoChange={onKanbanSituacaoChange}
+              onMoveBlocked={onKanbanMoveBlocked}
+              onVerDetalhes={handleVerDetalhes}
+            />
+          </Suspense>
         ) : loadingCotacoes ? (
           <div className="p-4 space-y-2">
             {Array.from({ length: 15 }).map((_, i) => (
@@ -1268,12 +1043,23 @@ export function WorkspaceScreen() {
               <OportunidadesPendentesClienteCard />
             </div>
             <div className="flex-1 min-h-0 p-4">
-              <AgGridReact<WorkspaceRow>
-                {...gridProps}
-                ref={gridRefNS}
-                rowData={displayRowsNS}
-                context={gridContextNS}
-              />
+              <Suspense fallback={<div className="space-y-2">{Array.from({ length: 15 }).map((_, i) => (<Skeleton key={i} className="h-9 w-full rounded" />))}</div>}>
+                <WorkspaceGrid
+                  ref={gridRefNS}
+                  rowData={displayRowsNS}
+                  context={gridContextNS}
+                  columnColorsRef={columnColorsRef}
+                  fontSize={fs}
+                  browserColorScheme={browserColorScheme}
+                  onCellEditingStarted={onCellEditingStarted}
+                  onCellValueChanged={onCellValueChanged}
+                  onCellContextMenu={onCellContextMenu}
+                  onColumnHeaderContextMenu={onColumnHeaderContextMenu}
+                  onGridReady={onGridReady}
+                  onColumnResized={onColumnResized}
+                  onDragStopped={onDragStopped}
+                />
+              </Suspense>
             </div>
           </div>
         )}
@@ -1281,18 +1067,22 @@ export function WorkspaceScreen() {
 
       {/* Aba Logs */}
       <TabsContent value="logs" className="flex-1 min-h-0 mt-0 overflow-hidden">
-        <ActivityFeed />
+        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando…</div>}>
+          <ActivityFeed />
+        </Suspense>
       </TabsContent>
 
       {/* Aba Equipe */}
       <TabsContent value="equipe" className="flex-1 min-h-0 mt-0 overflow-auto">
         <div className="p-5 max-w-2xl">
           {equipeData ? (
-            <EquipeWorkspaceView
-              data={equipeData}
-              onVisualizarCotacao={(c) => dialogs.openCotacao(c, 'view')}
-              onEditarCotacao={(c) => dialogs.openCotacao(c, 'edit')}
-            />
+            <Suspense fallback={<div className="py-16 text-center text-sm text-muted-foreground">Carregando…</div>}>
+              <EquipeWorkspaceView
+                data={equipeData}
+                onVisualizarCotacao={(c) => dialogs.openCotacao(c, 'view')}
+                onEditarCotacao={(c) => dialogs.openCotacao(c, 'edit')}
+              />
+            </Suspense>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Users className="size-10 text-muted-foreground/40 mb-3" />

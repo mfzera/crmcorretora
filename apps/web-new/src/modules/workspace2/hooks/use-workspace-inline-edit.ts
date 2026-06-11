@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, startTransition } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import type { AgGridReact } from 'ag-grid-react';
@@ -106,14 +106,20 @@ export function useWorkspaceInlineEdit({
       return c;
     };
 
-    queryClient.setQueryData<any[]>(areaTrabalhoKeys.cotacoes(), (old) => {
-      if (!Array.isArray(old)) return old;
-      return old.map((c) => (c.id === cotacaoId ? applyPatch(c) : c));
-    });
+    // O update do cache de cotações dispara o rebuild O(linhas) do pipeline em use-workspace-data.
+    // Marcá-lo como transição mantém o clique responsivo (INP): o feedback visual vem da mutação
+    // direta do node + refreshCells abaixo (síncronos); o rebuild acontece fora do caminho bloqueante.
+    // A semântica não muda — o cache continua atualizado, evitando o revert visual.
+    startTransition(() => {
+      queryClient.setQueryData<any[]>(areaTrabalhoKeys.cotacoes(), (old) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((c) => (c.id === cotacaoId ? applyPatch(c) : c));
+      });
 
-    queryClient.setQueryData<any>([...areaTrabalhoKeys.cotacoes(), cotacaoId], (old: any) => {
-      const base = old ?? (queryClient.getQueryData<any[]>(areaTrabalhoKeys.cotacoes()) as any[])?.find((c: any) => c.id === cotacaoId);
-      return base ? applyPatch(base) : old;
+      queryClient.setQueryData<any>([...areaTrabalhoKeys.cotacoes(), cotacaoId], (old: any) => {
+        const base = old ?? (queryClient.getQueryData<any[]>(areaTrabalhoKeys.cotacoes()) as any[])?.find((c: any) => c.id === cotacaoId);
+        return base ? applyPatch(base) : old;
+      });
     });
 
     // Mantém os campos do WorkspaceRow em sincronia para filtros e avatar
@@ -159,10 +165,13 @@ export function useWorkspaceInlineEdit({
 
       const flushCotacaoPatch = (cotacaoId: string, rollbackRowId: string) => {
         pendingCotacaoRowId.current = cotacaoId;
-        // Atualiza cache imediatamente para evitar revert visual enquanto aguarda debounce
-        queryClient.setQueryData<any[]>(areaTrabalhoKeys.cotacoes(), (old) => {
-          if (!Array.isArray(old)) return old;
-          return old.map((c) => c.id === cotacaoId ? { ...c, ...pendingCotacaoPatch.current } : c);
+        // Atualiza cache para evitar revert visual enquanto aguarda debounce. Em transição:
+        // a célula já reflete o valor editado pelo ag-grid; o rebuild do pipeline não bloqueia.
+        startTransition(() => {
+          queryClient.setQueryData<any[]>(areaTrabalhoKeys.cotacoes(), (old) => {
+            if (!Array.isArray(old)) return old;
+            return old.map((c) => c.id === cotacaoId ? { ...c, ...pendingCotacaoPatch.current } : c);
+          });
         });
         if (debounceTimerCot.current) clearTimeout(debounceTimerCot.current);
         debounceTimerCot.current = setTimeout(() => {

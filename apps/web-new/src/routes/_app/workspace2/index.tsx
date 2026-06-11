@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
+import { Loader2 } from 'lucide-react';
 import { WorkspaceScreen } from '@/modules/workspace2';
 import {
   cotacoesAtivasQueryOptions,
@@ -8,7 +8,8 @@ import {
   equipeWorkspaceQueryOptions,
 } from '@/modules/area-trabalho/http';
 
-ModuleRegistry.registerModules([AllCommunityModule]);
+// O registro do ag-Grid mora em components/workspace-grid.tsx (carregado via React.lazy),
+// para que o vendor-aggrid (~1,1 MB) fique fora do chunk inicial da rota /workspace2.
 
 function getCurrentMonthFiltros() {
   const now = new Date();
@@ -31,15 +32,24 @@ export type WorkspaceSearch = z.infer<typeof workspaceSearchSchema>;
 
 export const Route = createFileRoute('/_app/workspace2/')({
   component: WorkspaceScreen,
+  pendingComponent: WorkspacePending,
   validateSearch: workspaceSearchSchema,
-  loader: async ({ context: { queryClient } }) => {
+  loader: ({ context: { queryClient } }) => {
     const filtros = getCurrentMonthFiltros();
-    // Dados críticos: dispara em paralelo e aguarda antes de renderizar a rota
-    await Promise.all([
-      queryClient.prefetchQuery(planilhaRenovacoesQueryOptions(filtros)),
-      queryClient.prefetchQuery(cotacoesAtivasQueryOptions()),
-    ]);
-    // Dados de equipe: mais pesado, não bloqueia a navegação
+    // Aquece o cache das queries críticas SEM bloquear o paint: a rota monta
+    // imediatamente e a tela exibe skeletons (loadingRenovacoes/loadingCotacoes)
+    // enquanto os dados chegam. Mesmo padrão de routes/_app/usuarios.tsx.
+    void queryClient.ensureQueryData(planilhaRenovacoesQueryOptions(filtros)).catch(() => {});
+    void queryClient.ensureQueryData(cotacoesAtivasQueryOptions()).catch(() => {});
+    // Dados de equipe: mais pesado, prefetch em background.
     void queryClient.prefetchQuery(equipeWorkspaceQueryOptions());
   },
 });
+
+function WorkspacePending() {
+  return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <Loader2 className="size-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
