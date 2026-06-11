@@ -54,10 +54,13 @@ export function useSegurosAtivos(filters: CrossSellingFilters = {}) {
       if (filters.dataAprovacaoDe) params.dataAprovacaoDe = filters.dataAprovacaoDe;
       if (filters.dataAprovacaoAte) params.dataAprovacaoAte = filters.dataAprovacaoAte;
 
+      console.log('[xsell] GET /sales-documents params', params);
       const response = await api.get<any>('/sales-documents', { params });
 
       if (response && typeof response === 'object' && 'data' in response && 'meta' in response) {
-        return response as PaginatedSegurosCrossS;
+        const res = response as PaginatedSegurosCrossS;
+        console.log('[xsell] response meta.total', res.meta?.total, 'data.length', res.data?.length);
+        return res;
       }
       const arr = Array.isArray(response) ? response : (response as any)?.data ?? [];
       return {

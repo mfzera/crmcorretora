@@ -227,7 +227,10 @@ export const CrossSellingFilters = memo(function CrossSellingFilters({
           <Calendar
             mode="range"
             selected={filters.vigenciaInicioRange}
-            onSelect={(range) => onChangeFilters({ vigenciaInicioRange: range })}
+            onSelect={(range) => {
+              console.log('[xsell] onSelect vigenciaInicio', range);
+              onChangeFilters({ vigenciaInicioRange: range });
+            }}
           />
         </PopoverContent>
       </Popover>
@@ -261,7 +264,10 @@ export const CrossSellingFilters = memo(function CrossSellingFilters({
           <Calendar
             mode="range"
             selected={filters.vigenciaFimRange}
-            onSelect={(range) => onChangeFilters({ vigenciaFimRange: range })}
+            onSelect={(range) => {
+              console.log('[xsell] onSelect vigenciaFim', range);
+              onChangeFilters({ vigenciaFimRange: range });
+            }}
           />
         </PopoverContent>
       </Popover>
@@ -295,7 +301,10 @@ export const CrossSellingFilters = memo(function CrossSellingFilters({
           <Calendar
             mode="range"
             selected={filters.dataAprovacaoRange}
-            onSelect={(range) => onChangeFilters({ dataAprovacaoRange: range })}
+            onSelect={(range) => {
+              console.log('[xsell] onSelect dataAprovacao', range);
+              onChangeFilters({ dataAprovacaoRange: range });
+            }}
           />
         </PopoverContent>
       </Popover>
