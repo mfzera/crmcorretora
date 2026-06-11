@@ -12,6 +12,13 @@ import { type VendedorMetricas, type TipoDoc } from '../components/LeaderboardTa
 
 export type Periodo = 'mes_atual' | 'mes_anterior' | 'trimestre' | 'ano';
 
+/**
+ * Mínimo de vendas no período para um vendedor exibir/rankear Comissão Média e
+ * Ticket Médio. Como são médias, poucas vendas distorcem o valor (ex.: 1 venda
+ * com 40% de comissão viraria "40% de comissão média").
+ */
+export const MIN_VENDAS_MEDIA = 10;
+
 export function getPeriodo(p: Periodo): { dataInicio: string; dataFim: string } {
   const hoje = dayjs();
   switch (p) {
@@ -45,6 +52,7 @@ function sortedByMetric(
   docsFiltrados: any[],
   vendedorMetricas: Record<string, VendedorMetricas>,
   sortKey: keyof VendedorMetricas,
+  minVendas = 0,
 ): RankingItem[] {
   const sellersInfo = new Map<string, RankingItem>();
   ranking.forEach((r) => sellersInfo.set(r.usuarioId, r));
@@ -66,7 +74,11 @@ function sortedByMetric(
     });
   });
   return [...sellersInfo.values()]
-    .filter((s) => (vendedorMetricas[s.usuarioId]?.[sortKey] ?? 0) > 0)
+    .filter(
+      (s) =>
+        (vendedorMetricas[s.usuarioId]?.[sortKey] ?? 0) > 0 &&
+        (vendedorMetricas[s.usuarioId]?.quantidadeVendas ?? 0) >= minVendas,
+    )
     .sort(
       (a, b) =>
         (vendedorMetricas[b.usuarioId]?.[sortKey] ?? 0) -
@@ -155,9 +167,9 @@ export function useRankingData(
     return {
       pontos: byPontos,
       premio: sortedByMetric(ranking, docsFiltrados, vendedorMetricas, 'totalPremio'),
-      comissao: sortedByMetric(ranking, docsFiltrados, vendedorMetricas, 'mediaComissao'),
+      comissao: sortedByMetric(ranking, docsFiltrados, vendedorMetricas, 'mediaComissao', MIN_VENDAS_MEDIA),
       quantidade: sortedByMetric(ranking, docsFiltrados, vendedorMetricas, 'quantidadeVendas'),
-      ticketMedio: sortedByMetric(ranking, docsFiltrados, vendedorMetricas, 'ticketMedio'),
+      ticketMedio: sortedByMetric(ranking, docsFiltrados, vendedorMetricas, 'ticketMedio', MIN_VENDAS_MEDIA),
     };
   }, [ranking, vendedorMetricas, docsFiltrados]);
 

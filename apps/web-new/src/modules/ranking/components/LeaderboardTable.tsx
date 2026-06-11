@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/core/ui/avatar';
 import { Skeleton } from '@/core/ui/skeleton';
 import { cn } from '@/core/utils';
 import { type RankingItem } from '@/modules/gamificacao/http';
+import { MIN_VENDAS_MEDIA } from '../hooks/useRankingData';
 
 type Periodo = 'mes_atual' | 'mes_anterior' | 'trimestre' | 'ano';
 export type TipoDoc = 'todos' | 'novo' | 'renovacao';
@@ -418,7 +419,7 @@ function LeaderboardRow({
           )
         )}
         {tipoRanking === 'comissao' && (
-          metricas && metricas.mediaComissao > 0 ? (
+          metricas && metricas.mediaComissao > 0 && metricas.quantidadeVendas >= MIN_VENDAS_MEDIA ? (
             <>
               <span className="text-purple-400 text-sm font-bold tabular-nums">
                 {metricas.mediaComissao.toFixed(1)}
@@ -442,7 +443,7 @@ function LeaderboardRow({
           )
         )}
         {tipoRanking === 'ticketMedio' && (
-          metricas && metricas.ticketMedio > 0 ? (
+          metricas && metricas.ticketMedio > 0 && metricas.quantidadeVendas >= MIN_VENDAS_MEDIA ? (
             <span className="text-cyan-400 text-sm font-bold tabular-nums">
               {brlCompact(metricas.ticketMedio)}
             </span>
@@ -465,7 +466,7 @@ function LeaderboardRow({
 
       {/* Ticket médio */}
       <div className="hidden sm:block text-right">
-        {metricas && metricas.ticketMedio > 0 ? (
+        {metricas && metricas.ticketMedio > 0 && metricas.quantidadeVendas >= MIN_VENDAS_MEDIA ? (
           <span className="text-white/60 text-xs tabular-nums">
             {brlCompact(metricas.ticketMedio)}
           </span>
@@ -476,7 +477,7 @@ function LeaderboardRow({
 
       {/* Comissão média */}
       <div className="hidden sm:block text-right">
-        {metricas && metricas.mediaComissao > 0 ? (
+        {metricas && metricas.mediaComissao > 0 && metricas.quantidadeVendas >= MIN_VENDAS_MEDIA ? (
           <span className="text-purple-400 text-xs font-medium tabular-nums">
             {metricas.mediaComissao.toFixed(1)}%
           </span>
