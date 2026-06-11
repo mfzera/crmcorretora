@@ -27,8 +27,10 @@ export async function onRequest(context: EventContext<Record<string, unknown>, s
     "style-src 'self' 'unsafe-inline'",
     "font-src 'self'",
     `img-src 'self' data: blob: https://*.r2.cloudflarestorage.com${storageOrigin ? ` ${storageOrigin}` : ''}`,
-    `connect-src 'self' https://www.google.com/recaptcha/ https://*.r2.cloudflarestorage.com${apiOrigin ? ` ${apiOrigin}` : ''}${wsOrigin ? ` ${wsOrigin}` : ''}${storageOrigin ? ` ${storageOrigin}` : ''}`,
+    `connect-src 'self' https://www.google.com/recaptcha/ https://*.r2.cloudflarestorage.com https://*.ingest.sentry.io https://*.ingest.us.sentry.io${apiOrigin ? ` ${apiOrigin}` : ''}${wsOrigin ? ` ${wsOrigin}` : ''}${storageOrigin ? ` ${storageOrigin}` : ''}`,
     `frame-src 'self' blob: https://*.r2.cloudflarestorage.com${storageOrigin ? ` ${storageOrigin}` : ''} https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/`,
+    // Sentry Session Replay usa worker via blob: — sem isto, default-src 'self' o bloqueia
+    "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
