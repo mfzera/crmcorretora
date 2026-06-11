@@ -56,6 +56,18 @@ export default defineConfig(({ mode }) => {
     process.env.VITE_STORAGE_URL ||
     'https://storage.grupoecosistema.com.br';
 
+  // Sentry — o build roda no CI (sem .env), então o DSN precisa entrar via define,
+  // como as URLs acima. DSN é público (vai no bundle por design).
+  const sentryDsn =
+    env.VITE_SENTRY_DSN ||
+    process.env.VITE_SENTRY_DSN ||
+    'https://7e0d7b4d206c529053d954f95c989607@o4511546855391232.ingest.us.sentry.io/4511546858930176';
+
+  const sentryTracesSampleRate =
+    env.VITE_SENTRY_TRACES_SAMPLE_RATE ||
+    process.env.VITE_SENTRY_TRACES_SAMPLE_RATE ||
+    '0.5';
+
   return {
     resolve: {
       alias: {
@@ -129,6 +141,8 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
       'import.meta.env.VITE_APP_URL': JSON.stringify(appUrl),
       'import.meta.env.VITE_STORAGE_URL': JSON.stringify(storageUrl),
+      'import.meta.env.VITE_SENTRY_DSN': JSON.stringify(sentryDsn),
+      'import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE': JSON.stringify(sentryTracesSampleRate),
     },
   };
 });
