@@ -1,17 +1,11 @@
 name: Cloudflare Pages Deploy
 
+# DESABILITADO: o deploy real do frontend é feito pela integração nativa
+# Cloudflare Pages <-> Git. Este workflow falhava em todo push porque os secrets
+# CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID estão vazios, deixando o CI
+# permanentemente vermelho. Mantido apenas como disparo manual (workflow_dispatch);
+# para reativar o deploy via Actions, configure os secrets e restaure o gatilho push.
 on:
-  push:
-    branches:
-      - main
-      - develop
-    paths:
-      - 'apps/web-new/**'
-      - 'libs/shared/types/**'
-      - 'libs/shared/utils/**'
-      - 'libs/shared/config/**'
-      - 'libs/shared/ui/**'
-      - 'pnpm-lock.yaml'
   workflow_dispatch:
 
 jobs:

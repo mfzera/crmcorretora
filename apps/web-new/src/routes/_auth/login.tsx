@@ -125,8 +125,12 @@ function LoginForm() {
         return;
       }
 
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      // Valida o formato do JWT (header.payload.signature) antes de decodificar
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error('Token de autenticação inválido');
+      }
+      const base64 = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
       const tokenPayload = JSON.parse(atob(base64));
 
       const userData = {

@@ -1031,7 +1031,7 @@ export function WorkspaceScreen() {
                   variant="ghost"
                   size="sm"
                   className={`h-7 w-7 p-0 ${showExcluidos ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                  onClick={() => setShowExcluidos((v) => !v)}
+                  onClick={() => setShowExcluidos(!showExcluidos)}
                 >
                   {showExcluidos ? <EyeIcon className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                 </Button>

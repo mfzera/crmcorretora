@@ -1,5 +1,5 @@
 import { type RefObject } from 'react';
-import { TrendingUp, Percent, BarChart3, Ticket, ChevronLeft, ChevronRight, Minimize2 } from 'lucide-react';
+import { TrendingUp, Percent, BarChart3, Ticket, ChevronLeft, ChevronRight, Minimize2, type LucideIcon } from 'lucide-react';
 import { cn } from '@/core/utils';
 import { CATEGORY_STYLE } from './RankingPodium';
 import { type TipoRanking } from './LeaderboardTable';
@@ -7,7 +7,7 @@ import { type TipoRanking } from './LeaderboardTable';
 export const CATEGORIES: TipoRanking[] = ['premio', 'comissao', 'quantidade', 'ticketMedio'];
 export const ROTATION_INTERVAL = 60_000;
 
-const CATEGORY_ICONS: Record<TipoRanking, React.ElementType> = {
+const CATEGORY_ICONS: Record<TipoRanking, LucideIcon> = {
   premio: TrendingUp,
   comissao: Percent,
   quantidade: BarChart3,
@@ -20,7 +20,7 @@ interface CategoryNavProps {
   onSelect: (cat: TipoRanking) => void;
   onPrev: () => void;
   onNext: () => void;
-  progressBarRef: RefObject<HTMLDivElement>;
+  progressBarRef: RefObject<HTMLDivElement | null>;
   progressBarColor: string;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;

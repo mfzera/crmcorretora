@@ -41,21 +41,27 @@ function BlogIndexPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchPosts = async () => {
       try {
         setLoading(true);
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(`${apiUrl}/public/blog/posts`);
+        const response = await fetch(`${apiUrl}/public/blog/posts`, {
+          signal: controller.signal,
+        });
         if (!response.ok) throw new Error('Falha ao carregar posts');
         const data = await response.json();
         setPosts(data.posts);
       } catch {
+        // Ignora aborto disparado no unmount — não atualiza estado obsoleto
+        if (controller.signal.aborted) return;
         setError('Não foi possível carregar os posts.');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     fetchPosts();
+    return () => controller.abort();
   }, []);
 
   return (

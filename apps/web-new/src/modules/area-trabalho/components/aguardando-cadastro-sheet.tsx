@@ -170,7 +170,7 @@ export function AguardandoCadastroSheet({
   const [tab, setTab] = useState<'pendencias' | 'historico'>('pendencias');
   const { hasAnyPermission } = usePermissions();
   const podVerHistorico = hasAnyPermission(['cadastro:acessar', 'cadastro:aprovar_venda', 'cadastro:rejeitar_venda', 'vendas:visualizar_todos_documentos']);
-  const { data: logsResult, isLoading: loadingLogs } = useCadastroLogs(1, 20, open && podVerHistorico);
+  const { data: logsResult, isLoading: loadingLogs } = useCadastroLogs(1, 20, '', open && podVerHistorico);
   const logs = logsResult?.data ?? [];
 
   const total = vendasDiretas.length + endossos.length;

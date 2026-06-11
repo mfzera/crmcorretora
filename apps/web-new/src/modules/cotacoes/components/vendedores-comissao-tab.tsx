@@ -452,8 +452,8 @@ function VendedoresComissaoTabEdit({
                           setShowSecondary(true);
                           setShowSubvendedorPicker(false);
                           // Auto-fill commission split from subvendedor config
-                          if (s.percentual != null) {
-                            const percSub = s.percentual;
+                          if (s.percentualNovo != null) {
+                            const percSub = s.percentualNovo;
                             const percPrinc = Math.max(0, 100 - percSub);
                             percSecundarioField.onChange(String(percSub));
                             percPrincipalField.onChange(String(percPrinc));
@@ -465,12 +465,12 @@ function VendedoresComissaoTabEdit({
                           <User className="h-3.5 w-3.5 text-purple-600" />
                         </div>
                         <span className="flex-1 font-medium">{s.nome}</span>
-                        {s.percentual != null && (
+                        {s.percentualNovo != null && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <span className="text-purple-600 font-medium">{s.percentual}%</span>
+                            <span className="text-purple-600 font-medium">{s.percentualNovo}%</span>
                             <span>sub</span>
                             <span className="text-muted-foreground/60">·</span>
-                            <span className="text-blue-600 font-medium">{100 - s.percentual}%</span>
+                            <span className="text-blue-600 font-medium">{100 - s.percentualNovo}%</span>
                             <span>principal</span>
                           </div>
                         )}

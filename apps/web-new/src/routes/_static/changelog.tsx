@@ -89,12 +89,15 @@ function ChangelogPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchChangelogs = async () => {
       try {
         setLoading(true);
         const apiUrl =
           import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(`${apiUrl}/public/changelogs`);
+        const response = await fetch(`${apiUrl}/public/changelogs`, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error('Falha ao carregar changelogs');
@@ -103,16 +106,19 @@ function ChangelogPage() {
         const data = await response.json();
         setChangelogs(data.changelogs || []);
       } catch (err) {
+        // Ignora aborto disparado no unmount — não atualiza estado obsoleto
+        if (controller.signal.aborted) return;
         console.error('Erro ao buscar changelogs:', err);
         setError(
           'Não foi possível carregar as atualizações. Tente novamente mais tarde.',
         );
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     fetchChangelogs();
+    return () => controller.abort();
   }, []);
 
   const formatDate = (dateStr: string): string => {
