@@ -1,6 +1,4 @@
 
-import { useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { AnexoUploader } from './anexo-uploader';
 import { AnexoList } from './anexo-list';
 import { StorageIndicator } from './storage-indicator';
@@ -14,19 +12,6 @@ interface AnexosTabProps {
 }
 
 export function AnexosTab({ entidade, entidadeId, isActive, readOnly }: AnexosTabProps) {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    if (!isActive) return;
-    // Defer para depois do paint inicial da aba (melhora INP)
-    const id = setTimeout(() => {
-      queryClient.invalidateQueries({
-        queryKey: ['anexos', entidade, entidadeId],
-      });
-    }, 0);
-    return () => clearTimeout(id);
-  }, [isActive, entidade, entidadeId, queryClient]);
-
   if (!isActive) return null;
 
   return (

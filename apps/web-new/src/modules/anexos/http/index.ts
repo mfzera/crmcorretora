@@ -54,8 +54,8 @@ export function useAnexos(entidade: string, entidadeId: string) {
       return Array.isArray(response) ? response : [];
     },
     enabled: !!entidade && !!entidadeId,
-    staleTime: 60_000,
-    gcTime: 30_000,
+    staleTime: 5 * 60_000,
+    gcTime: 10 * 60_000,
   });
 }
 
