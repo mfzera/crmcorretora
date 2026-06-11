@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, startTransition } from 'react';
 import { Pencil, RefreshCw, Rocket, Trash2, Undo2, Users } from 'lucide-react';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { Avatar, AvatarFallback, AvatarImage } from '@/core/ui/avatar';
@@ -97,7 +97,7 @@ function SubvendedorGrupoButton({ data, ctx }: { data: WorkspaceRow; ctx: GridCo
                 <button
                   type="button"
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-muted-foreground"
-                  onMouseDown={(e) => { e.preventDefault(); ctx.onDirectUpdate(data, 'col_vendedor_secundario', null); data.vendedorSecundarioId = null; data.vendedorSecundarioNome = null; data.vendedorSecundarioAvatar = null; setOpen(false); }}
+                  onMouseDown={(e) => { e.preventDefault(); startTransition(() => { ctx.onDirectUpdate(data, 'col_vendedor_secundario', null); data.vendedorSecundarioId = null; data.vendedorSecundarioNome = null; data.vendedorSecundarioAvatar = null; setOpen(false); }); }}
                 >
                   Remover subvendedor
                 </button>
@@ -109,11 +109,13 @@ function SubvendedorGrupoButton({ data, ctx }: { data: WorkspaceRow; ctx: GridCo
                   className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted flex items-center gap-2 ${data.vendedorSecundarioId === s.id ? 'bg-muted' : ''}`}
                   onMouseDown={(e) => {
                     e.preventDefault();
-                    ctx.onDirectUpdate(data, 'col_vendedor_secundario', s.id);
-                    data.vendedorSecundarioId = s.id;
-                    data.vendedorSecundarioNome = s.nome ?? s.label ?? null;
-                    data.vendedorSecundarioAvatar = s.avatarUrl ?? null;
-                    setOpen(false);
+                    startTransition(() => {
+                      ctx.onDirectUpdate(data, 'col_vendedor_secundario', s.id);
+                      data.vendedorSecundarioId = s.id;
+                      data.vendedorSecundarioNome = s.nome ?? s.label ?? null;
+                      data.vendedorSecundarioAvatar = s.avatarUrl ?? null;
+                      setOpen(false);
+                    });
                   }}
                 >
                   <Avatar className="h-4 w-4 shrink-0">

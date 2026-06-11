@@ -1,5 +1,6 @@
 
 import * as React from 'react';
+import { startTransition } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useLocation } from '@tanstack/react-router';
 import { NotificationsButton } from '../layout/notifications-button';
@@ -472,8 +473,10 @@ export function AppSidebar() {
   const { isMobile, setOpenMobile, setOpen, state } = useSidebar();
 
   const handleNavClick = React.useCallback(() => {
-    if (isMobile) setOpenMobile(false);
-    else setOpen(false);
+    startTransition(() => {
+      if (isMobile) setOpenMobile(false);
+      else setOpen(false);
+    });
   }, [isMobile, setOpenMobile, setOpen]);
 
   const handleSidebarClick = React.useCallback(() => {
