@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { Button } from '@/core/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/core/ui/popover';
@@ -12,9 +12,10 @@ interface SituacaoDropdownProps {
 
 export function SituacaoDropdown({ value, onChange }: SituacaoDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [, startTransition] = useTransition();
 
   const toggle = (s: SituacaoLabel) =>
-    onChange(value.includes(s) ? value.filter((x) => x !== s) : [...value, s]);
+    startTransition(() => onChange(value.includes(s) ? value.filter((x) => x !== s) : [...value, s]));
 
   const label =
     value.length === 0 ? 'Situação' : value.length === 1 ? value[0] : `Situação (${value.length})`;
@@ -31,7 +32,7 @@ export function SituacaoDropdown({ value, onChange }: SituacaoDropdownProps) {
         {value.length > 0 && (
           <button
             className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted transition-colors"
-            onClick={() => onChange([])}
+            onClick={() => startTransition(() => onChange([]))}
           >
             Limpar filtro
           </button>
@@ -72,9 +73,10 @@ interface MultiSelectFilterProps {
 
 export function MultiSelectFilter({ label, icon, options, value, onChange }: MultiSelectFilterProps) {
   const [open, setOpen] = useState(false);
+  const [, startTransition] = useTransition();
 
   const toggle = (id: string) =>
-    onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]);
+    startTransition(() => onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id]));
 
   const btnLabel =
     value.length === 0
@@ -96,7 +98,7 @@ export function MultiSelectFilter({ label, icon, options, value, onChange }: Mul
         {value.length > 0 && (
           <button
             type="button"
-            onClick={() => onChange([])}
+            onClick={() => startTransition(() => onChange([]))}
             className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted transition-colors"
           >
             Limpar filtro

@@ -733,7 +733,7 @@ export function WorkspaceScreen() {
                   {tagFilter.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setTagFilter([])}
+                      onClick={() => startTransition(() => setTagFilter([]))}
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted transition-colors"
                     >
                       Limpar filtro
@@ -743,7 +743,7 @@ export function WorkspaceScreen() {
                     <button
                       key={tag.id}
                       type="button"
-                      onClick={() => setTagFilter(tagFilter.includes(tag.id) ? tagFilter.filter((id) => id !== tag.id) : [...tagFilter, tag.id])}
+                      onClick={() => startTransition(() => setTagFilter(tagFilter.includes(tag.id) ? tagFilter.filter((id) => id !== tag.id) : [...tagFilter, tag.id]))}
                       className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted transition-colors"
                     >
                       <span className="inline-block size-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.cor }} />
