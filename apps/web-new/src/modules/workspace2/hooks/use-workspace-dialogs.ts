@@ -149,7 +149,7 @@ export function useWorkspaceDialogs() {
     setSubvendedoresOpen: (open: boolean) => dispatch({ type: 'SET_SUBVENDEDORES_OPEN', open }),
     openTransferir: () => startTransition(() => dispatch({ type: 'OPEN_TRANSFERIR' })),
     setTransferirOpen: (open: boolean) => dispatch({ type: 'SET_TRANSFERIR_OPEN', open }),
-    openComentarios: (row: WorkspaceRow) => dispatch({ type: 'OPEN_COMENTARIOS', row }),
+    openComentarios: (row: WorkspaceRow) => startTransition(() => dispatch({ type: 'OPEN_COMENTARIOS', row })),
     closeComentarios: () => dispatch({ type: 'CLOSE_COMENTARIOS' }),
     openReenviarCadastro: (row: ReenviarCadastroRow) => dispatch({ type: 'OPEN_REENVIAR_CADASTRO', row }),
     closeReenviarCadastro: () => dispatch({ type: 'CLOSE_REENVIAR_CADASTRO' }),

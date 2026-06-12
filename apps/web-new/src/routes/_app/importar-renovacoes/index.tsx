@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { useState } from 'react';
+import { useState, startTransition } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
   Upload,
@@ -78,7 +78,7 @@ function ImportarRenovacoesPageContent() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) processFile(e.target.files[0]);
+    if (e.target.files?.[0]) startTransition(() => processFile(e.target.files![0]));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -96,7 +96,7 @@ function ImportarRenovacoesPageContent() {
     e.preventDefault();
     setIsDraggingOver(false);
     const file = e.dataTransfer.files[0];
-    if (file) processFile(file);
+    if (file) startTransition(() => processFile(file));
   };
 
   const handleDownloadModelo = () => {

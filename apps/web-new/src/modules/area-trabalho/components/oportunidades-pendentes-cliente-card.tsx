@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { UserPlus, Loader2, AlertTriangle, Check, ChevronsUpDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { Badge } from '@/core/ui/badge';
 import { Button } from '@/core/ui/button';
@@ -30,7 +30,7 @@ function formatarData(dataIso: string) {
   return new Date(dataIso).toLocaleDateString('pt-BR');
 }
 
-function ClienteSearchRow({ oportunidade }: { oportunidade: any }) {
+const ClienteSearchRow = memo(function ClienteSearchRow({ oportunidade }: { oportunidade: any }) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [novoClienteOpen, setNovoClienteOpen] = useState(false);
   const [clienteSearch, setClienteSearch] = useState('');
@@ -166,7 +166,7 @@ function ClienteSearchRow({ oportunidade }: { oportunidade: any }) {
       />
     </div>
   );
-}
+});
 
 const INITIAL_VISIBLE = 3;
 

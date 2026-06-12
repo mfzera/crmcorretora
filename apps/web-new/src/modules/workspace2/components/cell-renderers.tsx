@@ -1,4 +1,4 @@
-import { useState, startTransition } from 'react';
+import { useState, startTransition, memo, useMemo } from 'react';
 import { Pencil, RefreshCw, Rocket, Trash2, Undo2, Users } from 'lucide-react';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { Avatar, AvatarFallback, AvatarImage } from '@/core/ui/avatar';
@@ -30,7 +30,7 @@ function timeAgo(iso: string | null | undefined): string {
   return `há ${Math.floor(h / 24)} dias`;
 }
 
-export function ClienteCellRenderer({ data }: ICellRendererParams<WorkspaceRow>) {
+export const ClienteCellRenderer = memo(function ClienteCellRenderer({ data }: ICellRendererParams<WorkspaceRow>) {
   if (!data) return null;
   return (
     <div className="flex items-center gap-1.5 h-full min-w-0">
@@ -65,12 +65,12 @@ export function ClienteCellRenderer({ data }: ICellRendererParams<WorkspaceRow>)
       </span>
     </div>
   );
-}
+});
 
-function SubvendedorGrupoButton({ data, ctx }: { data: WorkspaceRow; ctx: GridContext }) {
+const SubvendedorGrupoButton = memo(function SubvendedorGrupoButton({ data, ctx }: { data: WorkspaceRow; ctx: GridContext }) {
   const [open, setOpen] = useState(false);
   const { data: subvendedores = [], isLoading } = useSubvendedores(data.vendedorId);
-  const ativos = subvendedores.filter((s: any) => s.ativo !== false);
+  const ativos = useMemo(() => subvendedores.filter((s: any) => s.ativo !== false), [subvendedores]);
 
   if (!isLoading && ativos.length === 0) return null;
 
@@ -131,9 +131,9 @@ function SubvendedorGrupoButton({ data, ctx }: { data: WorkspaceRow; ctx: GridCo
       </PopoverContent>
     </Popover>
   );
-}
+});
 
-export function VendedorCellRenderer({ data, context }: ICellRendererParams<WorkspaceRow> & { context: GridContext }) {
+export const VendedorCellRenderer = memo(function VendedorCellRenderer({ data, context }: ICellRendererParams<WorkspaceRow> & { context: GridContext }) {
   if (!data?.vendedorNome) return <span className="text-muted-foreground">—</span>;
   const ctx = context as GridContext;
   const canEdit = data._cotacao?.status === 'EM_ELABORACAO';
@@ -158,9 +158,9 @@ export function VendedorCellRenderer({ data, context }: ICellRendererParams<Work
       {canEdit && data.vendedorId && <SubvendedorGrupoButton data={data} ctx={ctx} />}
     </div>
   );
-}
+});
 
-export function SituacaoCellRenderer({ data }: ICellRendererParams<WorkspaceRow>) {
+export const SituacaoCellRenderer = memo(function SituacaoCellRenderer({ data }: ICellRendererParams<WorkspaceRow>) {
   if (!data) return null;
   const s = SITUACAO_STYLES[data.situacao];
   if (data.situacao === 'Excluído') {
@@ -186,9 +186,9 @@ export function SituacaoCellRenderer({ data }: ICellRendererParams<WorkspaceRow>
       </span>
     </div>
   );
-}
+});
 
-export function ComentariosCellRenderer({ data, context }: ICellRendererParams<WorkspaceRow> & { context: GridContext }) {
+export const ComentariosCellRenderer = memo(function ComentariosCellRenderer({ data, context }: ICellRendererParams<WorkspaceRow> & { context: GridContext }) {
   const [isEditing, setIsEditing] = useState(false);
   const [texto, setTexto] = useState('');
 
@@ -248,7 +248,7 @@ export function ComentariosCellRenderer({ data, context }: ICellRendererParams<W
       )}
     </button>
   );
-}
+});
 
 export function PLCellRenderer({ data }: ICellRendererParams<WorkspaceRow>) {
   if (!data || data.plAtual == null) return <span className="text-muted-foreground">—</span>;
@@ -265,7 +265,7 @@ export function ReceitaCellRenderer({ data }: ICellRendererParams<WorkspaceRow>)
   return <span className="tabular-nums font-medium text-emerald-600 dark:text-emerald-400">{fmt(data.receita)}</span>;
 }
 
-export function AcoesCellRenderer({
+export const AcoesCellRenderer = memo(function AcoesCellRenderer({
   data,
   context,
 }: ICellRendererParams<WorkspaceRow> & { context: GridContext }) {
@@ -374,4 +374,4 @@ export function AcoesCellRenderer({
       </AlertDialog>
     </>
   );
-}
+});
