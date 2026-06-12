@@ -3,6 +3,7 @@ import { cn } from '@/core/utils';
 import { RankingControls } from './RankingControls';
 import { type TipoDoc } from './LeaderboardTable';
 import { type Periodo } from '../hooks/useRankingData';
+import { useEquipes } from '@/modules/equipes/http';
 
 const PERIODO_LABELS: Record<Periodo, string> = {
   mes_atual: 'Mês atual',
@@ -22,6 +23,8 @@ interface RankingFilterBarProps {
   onPeriodoChange: (p: Periodo) => void;
   tipoDoc: TipoDoc;
   onTipoDocChange: (t: TipoDoc) => void;
+  equipeId: string | undefined;
+  onEquipeIdChange: (id: string | undefined) => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
   viewMode: 'modern' | 'classic';
@@ -35,6 +38,8 @@ export function RankingFilterBar({
   onPeriodoChange,
   tipoDoc,
   onTipoDocChange,
+  equipeId,
+  onEquipeIdChange,
   isFullscreen,
   onToggleFullscreen,
   viewMode,
@@ -42,6 +47,9 @@ export function RankingFilterBar({
   showBackground,
   onToggleBackground,
 }: RankingFilterBarProps) {
+  const { data: equipesData } = useEquipes();
+  const equipes: any[] = Array.isArray(equipesData) ? equipesData : ((equipesData as any)?.data ?? []);
+
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/[0.06] bg-[#0a0b10] shrink-0 overflow-x-auto">
       {/* Período */}
@@ -83,6 +91,20 @@ export function RankingFilterBar({
           </button>
         ))}
       </div>
+
+      <div className="h-4 w-px bg-white/[0.08] shrink-0" />
+
+      {/* Equipe */}
+      <select
+        value={equipeId ?? ''}
+        onChange={(e) => onEquipeIdChange(e.target.value || undefined)}
+        className="text-[10px] bg-white/[0.04] border border-white/[0.08] text-white/60 rounded-md px-2 py-1 outline-none cursor-pointer hover:text-white/80 hover:bg-white/[0.07] transition-colors shrink-0"
+      >
+        <option value="">Todas as equipes</option>
+        {equipes.map((eq) => (
+          <option key={eq.id} value={eq.id}>{eq.nome}</option>
+        ))}
+      </select>
 
       <div className="ml-auto flex items-center gap-1.5 shrink-0">
         {/* Fundo — apenas no modo clássico */}

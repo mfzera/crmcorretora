@@ -26,6 +26,7 @@ export function RankingDisplay() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [periodo, setPeriodo] = useState<Periodo>('mes_atual');
   const [tipoDoc, setTipoDoc] = useState<TipoDoc>('todos');
+  const [equipeId, setEquipeId] = useState<string | undefined>(undefined);
   const [activeCategory, setActiveCategory] = useState<TipoRanking>('premio');
   const [rotationKey, setRotationKey] = useState(0);
   const [viewMode, setViewMode] = useState<'modern' | 'classic'>('modern');
@@ -45,7 +46,7 @@ export function RankingDisplay() {
   const params = useMemo(() => getPeriodo(periodo), [periodo]);
 
   const { rankingLoading, rankingsByMetric, vendedorMetricas, usuariosMap, metas, campanhas } =
-    useRankingData(params, tipoDoc);
+    useRankingData(params, tipoDoc, equipeId);
 
   useRankingSSE();
 
@@ -168,6 +169,8 @@ export function RankingDisplay() {
           onPeriodoChange={setPeriodo}
           tipoDoc={tipoDoc}
           onTipoDocChange={setTipoDoc}
+          equipeId={equipeId}
+          onEquipeIdChange={setEquipeId}
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
           viewMode={viewMode}

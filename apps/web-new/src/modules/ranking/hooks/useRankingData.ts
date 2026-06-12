@@ -90,8 +90,9 @@ function sortedByMetric(
 export function useRankingData(
   params: { dataInicio: string; dataFim: string },
   tipoDoc: TipoDoc,
+  equipeId?: string,
 ) {
-  const { data: rankingData, isLoading: rankingLoading } = useRankingGamificacao(params);
+  const { data: rankingData, isLoading: rankingLoading } = useRankingGamificacao({ ...params, equipeId });
   const ranking = rankingData?.ranking ?? [];
 
   const { data: metasRaw } = useMetasAtivas();
@@ -119,14 +120,21 @@ export function useRankingData(
   });
 
   const docsFiltrados = useMemo(() => {
-    if (tipoDoc === 'todos') return docsPeriodo as any[];
-    return (docsPeriodo as any[]).filter((doc) => {
-      const situacao = String(doc.situacaoCotacao ?? '').toUpperCase();
-      if (tipoDoc === 'renovacao') return situacao === 'RENOVACAO';
-      if (tipoDoc === 'novo') return situacao === 'NOVO';
-      return true;
-    });
-  }, [docsPeriodo, tipoDoc]);
+    let docs = docsPeriodo as any[];
+    if (tipoDoc !== 'todos') {
+      docs = docs.filter((doc) => {
+        const situacao = String(doc.situacaoCotacao ?? '').toUpperCase();
+        if (tipoDoc === 'renovacao') return situacao === 'RENOVACAO';
+        if (tipoDoc === 'novo') return situacao === 'NOVO';
+        return true;
+      });
+    }
+    if (equipeId) {
+      const teamUserIds = new Set(ranking.map((r) => r.usuarioId));
+      docs = docs.filter((doc) => doc.vendedor?.id && teamUserIds.has(doc.vendedor.id));
+    }
+    return docs;
+  }, [docsPeriodo, tipoDoc, equipeId, ranking]);
 
   const vendedorMetricas = useMemo<Record<string, VendedorMetricas>>(() => {
     const map: Record<
