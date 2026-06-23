@@ -418,7 +418,7 @@ export function useRegistrarApoliceAvulsa() {
       observacoes?: string;
     }) => {
       return api.post<{ success: true; data: DocumentoVenda }>(
-        '/sales-documents/registrar-apolice-avulsa',
+        '/sales-documents/register-standalone-policy',
         data,
       );
     },
