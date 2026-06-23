@@ -608,7 +608,7 @@ const renovacoesRoutes: FastifyPluginAsyncZod = async function (fastify) {
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${request.corretoraId + ':cot'}))`);
         const maxResult = await tx
           .select({
-            maxNum: sql<string>`MAX(${cotacoes.numeroCotacao})`,
+            maxNum: sql<number>`COALESCE(MAX((regexp_match(${cotacoes.numeroCotacao}, '(\\d+)$'))[1]::int), 0)`,
           })
           .from(cotacoes)
           .where(
@@ -617,10 +617,8 @@ const renovacoesRoutes: FastifyPluginAsyncZod = async function (fastify) {
               sql`${cotacoes.numeroCotacao} LIKE ${prefix + '%'}`,
             ),
           );
-        const ultimoNum = maxResult[0]?.maxNum
-          ? parseInt(maxResult[0].maxNum.split('-').pop() || '0')
-          : 0;
-        const numeroCotacao = `${prefix}${String(ultimoNum + 1).padStart(3, '0')}`;
+        const ultimoNum = maxResult[0]?.maxNum ?? 0;
+        const numeroCotacao = `${prefix}${String(ultimoNum + 1)}`;
 
         // Datas - usar dataVencimento da renovação como base se não houver documento anterior
         const dataBaseVigencia =

@@ -172,7 +172,7 @@ const cotacoesRoutes: FastifyPluginAsyncZod = async function (fastify) {
       const now = new Date();
       const anoMes = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
       const maxResult = await db
-        .select({ max: sql<string>`MAX(numero_cotacao)` })
+        .select({ max: sql<number>`COALESCE(MAX((regexp_match(numero_cotacao, '(\\d+)$'))[1]::int), 0)` })
         .from(cotacoes)
         .where(
           and(
@@ -181,9 +181,7 @@ const cotacoesRoutes: FastifyPluginAsyncZod = async function (fastify) {
           ),
         );
 
-      const lastNum = maxResult[0]?.max
-        ? parseInt(maxResult[0].max.split('-').pop() ?? '0', 10)
-        : 0;
+      const lastNum = maxResult[0]?.max ?? 0;
       const sequencial = lastNum + 1;
       const numeroCotacao = generateNumeroCotacao(
         request.corretoraId,
@@ -2235,10 +2233,10 @@ const cotacoesRoutes: FastifyPluginAsyncZod = async function (fastify) {
       const now = new Date();
       const anoMes = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
       const maxResult = await db
-        .select({ max: sql<string>`MAX(numero_cotacao)` })
+        .select({ max: sql<number>`COALESCE(MAX((regexp_match(numero_cotacao, '(\\d+)$'))[1]::int), 0)` })
         .from(cotacoes)
         .where(and(eq(cotacoes.corretoraId, request.corretoraId), sql`numero_cotacao LIKE ${'COT-' + anoMes + '-%'}`));
-      const lastNum = maxResult[0]?.max ? parseInt(maxResult[0].max.split('-').pop() ?? '0', 10) : 0;
+      const lastNum = maxResult[0]?.max ?? 0;
       const numeroCotacao = generateNumeroCotacao(request.corretoraId, lastNum + 1);
 
       const [cotacao] = await db
