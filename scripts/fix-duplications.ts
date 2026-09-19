@@ -2,9 +2,8 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { sql } from 'drizzle-orm';
 
-const DATABASE_URL =
-  process.env.DATABASE_URL ||
-  'postgresql://postgres:postgres123@localhost:5432/saas_seguradoras';
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) throw new Error('DATABASE_URL não definida');
 
 async function analyzeDuplications() {
   const pool = new Pool({

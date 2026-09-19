@@ -171,8 +171,9 @@ async function main() {
   if (corretoraId) {
     try {
       const { Pool } = await import('pg');
+      if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL não definida');
       const pool = new Pool({
-        connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres123@localhost:5432/saas_seguradoras',
+        connectionString: process.env.DATABASE_URL,
       });
       const result = await pool.query(
         'SELECT id, nome_produto as "nomeProduto" FROM produto WHERE corretora_id = $1 AND deleted_at IS NULL ORDER BY nome_produto',
